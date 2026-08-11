@@ -14,9 +14,9 @@ import {
   SparkIcon,
   CheckIcon,
 } from '@/components/icons';
-import { studyDoc, docConceptNotes } from '@/lib/fixtures';
+import { docConceptNotes } from '@/lib/fixtures';
 import { cn } from '@/lib/utils';
-import type { BlockKind, Description, DocBlock, LearnerQuestion } from '@/lib/types';
+import type { BlockKind, Description, DocBlock, LearnerQuestion, StudyDoc } from '@/lib/types';
 
 const KIND_ICON: Record<BlockKind, typeof DocIcon> = {
   heading: DocIcon,
@@ -55,7 +55,7 @@ const DOC_PRESETS = [
   'What is the balance factor?',
 ];
 
-export function Reader() {
+export function Reader({ doc }: { doc: StudyDoc }) {
   const [read, setRead] = useState<Set<string>>(new Set());
   const [speaking, setSpeaking] = useState<string | null>(null);
   const [asked, setAsked] = useState<LearnerQuestion[]>([]);
@@ -63,14 +63,14 @@ export function Reader() {
   const [draft, setDraft] = useState('');
 
   const describedBlocks = useMemo(
-    () => studyDoc.blocks.filter((block) => block.described),
-    []
+    () => doc.blocks.filter((block) => block.described),
+    [doc]
   );
 
   /** Only blocks the learner has actually had read to them count as heard. */
   const heard = useMemo(
-    () => blocksAsDescriptions(studyDoc.blocks.filter((block) => read.has(block.id))),
-    [read]
+    () => blocksAsDescriptions(doc.blocks.filter((block) => read.has(block.id))),
+    [doc, read]
   );
 
   function readAloud(block: DocBlock) {
@@ -117,17 +117,17 @@ export function Reader() {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="truncate font-display text-lg font-semibold tracking-tight">
-              {studyDoc.title}
+              {doc.title}
             </h2>
             <p className="text-sm text-ink-faint">
-              {studyDoc.pages} pages · {studyDoc.words.toLocaleString()} words ·{' '}
+              {doc.pages} pages · {doc.words.toLocaleString()} words ·{' '}
               <span className="text-ink">{describedBlocks.length} visuals described</span>
             </p>
           </div>
         </header>
 
         <ul className="divide-y divide-line">
-          {studyDoc.blocks.map((block, i) => {
+          {doc.blocks.map((block, i) => {
             const Icon = KIND_ICON[block.kind];
             const isSpeaking = speaking === block.id;
             const hasRead = read.has(block.id);

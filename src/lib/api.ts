@@ -119,6 +119,26 @@ export interface SearchResult {
   url: string;
 }
 
+export interface WireDocBlock {
+  id: string;
+  page: number;
+  kind: 'heading' | 'text' | 'figure' | 'table' | 'formula' | 'chart';
+  content: string;
+  described: boolean;
+  /** True for an extracted image whose description has not been generated yet. */
+  pending?: boolean;
+  concept?: string;
+}
+
+export interface WireDoc {
+  id: string;
+  title: string;
+  pages: number;
+  words: number;
+  truncated?: boolean;
+  blocks: WireDocBlock[];
+}
+
 export interface PresetQuestion {
   id: string;
   label: string;
@@ -168,6 +188,39 @@ export const api = {
     request<{ results: SearchResult[] }>(`/api/search?q=${encodeURIComponent(query)}`),
 
   voiceSearchStatus: () => request<{ enabled: boolean }>('/api/voice-search/status'),
+
+  /** Upload a PDF as a raw body; the server extracts its block structure. */
+  uploadDoc: async (file: File) => {
+    const response = await fetch(
+      apiUrl(`/api/doc/upload?title=${encodeURIComponent(file.name)}`),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/pdf' },
+        body: file,
+      }
+    );
+
+    const text = await response.text();
+    let payload: unknown = null;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      const err = (payload as { error?: { message?: string; code?: string } } | null)?.error;
+      throw new ApiError(
+        err?.message ?? `Upload failed with status ${response.status}`,
+        response.status,
+        err?.code
+      );
+    }
+
+    return payload as WireDoc;
+  },
+
+  doc: (id: string) => request<WireDoc>(`/api/doc/${id}`),
 
   /** Send a recorded clip; the server transcribes it with Whisper and searches. */
   voiceSearch: async (blob: Blob, opts: { language?: string } = {}) => {
