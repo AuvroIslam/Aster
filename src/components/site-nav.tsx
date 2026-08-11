@@ -7,67 +7,63 @@ import { AsterMark } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 const links = [
-  { href: '#how', label: 'How it works' },
-  { href: '#method', label: 'Teaching method' },
   { href: '#features', label: 'Features' },
-  { href: '/study', label: 'Notes and PDFs' },
+  { href: '#how', label: 'How it works' },
+  { href: '#demo', label: 'Demo' },
+  { href: '#privacy', label: 'Privacy' },
 ];
 
 export function SiteNav() {
   const { scrollY } = useScroll();
-  const [condensed, setCondensed] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  useMotionValueEvent(scrollY, 'change', (value) => {
-    setCondensed(value > 40);
-  });
+  useMotionValueEvent(scrollY, 'change', (value) => setScrolled(value > 24));
 
   return (
     <motion.header
-      initial={{ y: -80, opacity: 0 }}
+      initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-4"
+      className={cn(
+        'fixed inset-x-0 top-0 z-40 transition-colors duration-500',
+        scrolled && 'border-b border-line bg-ground/80 backdrop-blur-xl'
+      )}
     >
       <nav
         aria-label="Main"
-        className={cn(
-          'flex w-full max-w-5xl items-center gap-2 rounded-full px-3 py-2 transition-all duration-500',
-          condensed ? 'glass lift max-w-3xl' : 'border border-transparent'
-        )}
+        className="mx-auto flex max-w-[1400px] items-center px-6 py-4 sm:px-10"
       >
-        <Link href="/" className="flex items-center gap-2 rounded-full px-2 py-1 font-semibold">
+        <Link href="/" className="flex items-center gap-2.5 text-[15px] font-medium">
           <motion.span
-            whileHover={{ rotate: 90 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="text-rust"
+            whileHover={{ rotate: 180 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="inline-block"
           >
-            <AsterMark className="h-6 w-6" />
+            <AsterMark className="h-[18px] w-[18px]" />
           </motion.span>
-          <span className="text-lg tracking-tight">Aster</span>
+          Aster
         </Link>
 
-        <ul className="ml-4 hidden items-center gap-1 md:flex">
+        <ul className="mx-auto hidden items-center gap-9 md:flex">
           {links.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="relative rounded-full px-3 py-2 text-sm text-ink-soft transition-colors hover:text-ink"
+                className="group relative text-sm text-ink-soft transition-colors hover:text-ink"
               >
                 {link.label}
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-ink transition-all duration-300 group-hover:w-full" />
               </Link>
             </li>
           ))}
         </ul>
 
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/learn"
-            className="group relative overflow-hidden rounded-full bg-moss px-5 py-2.5 text-sm font-medium text-ground transition-transform duration-300 hover:scale-[1.03] active:scale-95"
-          >
-            <span className="relative z-10">Open Aster</span>
-            <span className="absolute inset-0 -translate-x-full bg-rust transition-transform duration-500 ease-out-soft group-hover:translate-x-0" />
-          </Link>
-        </div>
+        <Link
+          href="/learn"
+          className="ml-auto rounded-full border border-line-strong px-5 py-2 text-sm transition-colors duration-300 hover:bg-ink hover:text-ground md:ml-0"
+        >
+          Try Aster
+        </Link>
       </nav>
     </motion.header>
   );

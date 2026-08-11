@@ -1,19 +1,21 @@
 import { SiteNav } from '@/components/site-nav';
 import { Hero } from '@/components/landing/hero';
-import { Loop } from '@/components/landing/loop';
-import { Method } from '@/components/landing/method';
-import { Features, CallToAction, SiteFooter } from '@/components/landing/features';
+import { Features, HowItWorks } from '@/components/landing/features';
+import { Demo } from '@/components/landing/demo';
+import { TutorSection, StudySection, Privacy, SiteFooter } from '@/components/landing/tutor-section';
 
 export default function Home() {
   return (
     <>
       <SiteNav />
-      <main id="main">
+      <main id="main" className="grain">
         <Hero />
-        <Loop />
-        <Method />
         <Features />
-        <CallToAction />
+        <HowItWorks />
+        <Demo />
+        <TutorSection />
+        <StudySection />
+        <Privacy />
       </main>
       <SiteFooter />
     </>

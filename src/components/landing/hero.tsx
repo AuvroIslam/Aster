@@ -1,166 +1,181 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
-import { useEffect, useState } from 'react';
-import { AuroraField, Parallax } from '@/components/motion/parallax';
-import { Magnetic, TiltCard } from '@/components/motion/tilt-card';
-import { TextEffect, RotatingWord } from '@/components/motion/text-effect';
-import { Waveform } from '@/components/motion/waveform';
-import { ArrowIcon, SpeakerIcon, CodeIcon, GraphIcon, TerminalIcon } from '@/components/icons';
-
-const ROTATING = ['lecture', 'diagram', 'traceback', 'formula', 'textbook'];
+import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { useRef } from 'react';
+import { TextEffect } from '@/components/motion/text-effect';
+import { Magnetic } from '@/components/motion/tilt-card';
+import { AsterMark, PlayIcon } from '@/components/icons';
 
 export function Hero() {
-  const [wordIndex, setWordIndex] = useState(0);
+  const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
 
-  useEffect(() => {
-    if (reduced) return;
-    const id = setInterval(() => setWordIndex((i) => i + 1), 2400);
-    return () => clearInterval(id);
-  }, [reduced]);
+  // The hero copy drifts up and dissolves as the page moves past it.
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, -90]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const stageY = useTransform(scrollYProgress, [0, 1], [0, 60]);
 
   return (
-    <section className="relative overflow-hidden px-4 pb-24 pt-36 sm:pt-44">
-      <AuroraField className="pointer-events-none absolute inset-0 -z-10" />
+    <section ref={ref} className="relative overflow-hidden px-6 pb-28 pt-40 sm:px-10 sm:pt-52">
+      {/* A single soft bloom behind the mark, the only light in the section. */}
+      <div
+        aria-hidden
+        className="animate-pulse-soft pointer-events-none absolute left-1/2 top-40 -z-10 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-white/[0.045] blur-[130px]"
+      />
 
-      {/* Faint paper grid, drifting slower than the content above it. */}
-      <Parallax speed={0.35} clamp={80} className="pointer-events-none absolute inset-0 -z-10">
-        <div
-          className="h-full w-full opacity-[0.035]"
-          style={{
-            backgroundImage:
-              'linear-gradient(var(--ink) 1px, transparent 1px), linear-gradient(90deg, var(--ink) 1px, transparent 1px)',
-            backgroundSize: '56px 56px',
-          }}
-        />
-      </Parallax>
-
-      <div className="mx-auto max-w-5xl text-center">
+      <motion.div
+        style={reduced ? undefined : { y: copyY, opacity: copyOpacity }}
+        className="mx-auto max-w-4xl text-center"
+      >
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="glass mx-auto mb-7 inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 text-sm text-ink-soft"
+          initial={{ opacity: 0, scale: 0.7, rotate: -60 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto mb-12 w-fit"
         >
-          <span className="text-rust">
-            <Waveform bars={4} className="h-3" />
-          </span>
-          Audio-first learning for blind and low-vision students
+          <AsterMark className="animate-spin-slow h-14 w-14" />
         </motion.div>
 
-        <h1 className="font-display text-balance text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl">
-          <TextEffect as="span" className="block" delay={0.2}>
-            Every lesson has a
-          </TextEffect>
-          <span className="mt-2 block">
-            <RotatingWord words={ROTATING} index={wordIndex} />
-          </span>
-          <TextEffect as="span" className="mt-2 block text-ink-soft" delay={0.45}>
-            nobody reads aloud.
+        <h1 className="headline text-balance text-[3.25rem] leading-[0.98] sm:text-7xl md:text-[5.5rem]">
+          <TextEffect as="span" delay={0.25} stagger={0.06}>
+            Learn without limits.
           </TextEffect>
         </h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.9, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto mt-8 max-w-2xl text-balance text-lg leading-relaxed text-ink-soft"
+          transition={{ duration: 0.9, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto mt-8 max-w-xl text-balance text-lg leading-relaxed text-ink-soft"
         >
-          Aster watches the screen the instructor forgets to describe, speaks only into the
-          pauses — then tutors you on exactly the parts you had to take on trust.
+          Aster turns visual learning into an accessible, audio-first experience for blind and
+          low-vision students.
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-11 flex flex-wrap items-center justify-center gap-3"
+          transition={{ duration: 0.8, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-10 flex flex-wrap items-center justify-center gap-3"
         >
           <Magnetic>
             <Link
               href="/learn"
-              className="glow group inline-flex items-center gap-2 rounded-full bg-rust px-7 py-4 font-medium text-white transition-shadow"
+              className="inline-block rounded-full bg-ink px-7 py-3 text-[15px] font-medium text-ground transition-transform duration-300 hover:scale-[1.03]"
             >
-              Start a lesson
-              <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              Try Aster
             </Link>
           </Magnetic>
-          <Magnetic strength={0.18}>
+          <Magnetic strength={0.16}>
             <Link
               href="#how"
-              className="glass inline-flex items-center gap-2 rounded-full px-6 py-4 font-medium text-ink transition-colors hover:text-rust"
+              className="inline-block rounded-full border border-line-strong px-7 py-3 text-[15px] transition-colors duration-300 hover:bg-white/[0.06]"
             >
-              <SpeakerIcon className="h-4 w-4" />
-              Hear how it works
+              See how it works
             </Link>
           </Magnetic>
         </motion.div>
-      </div>
+      </motion.div>
 
-      <HeroPreview />
+      <motion.div style={reduced ? undefined : { y: stageY }}>
+        <HeroStage />
+      </motion.div>
+
+      <motion.div
+        aria-hidden
+        animate={reduced ? {} : { y: [0, 8, 0] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        className="mx-auto mt-16 w-fit text-ink-ghost"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.4">
+          <path d="M12 4v15M6 13.5l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </motion.div>
     </section>
   );
 }
 
-const SAMPLE = [
-  { time: '03:12', icon: CodeIcon, mode: 'full explanation', confidence: 96, text: "The code editor shows a Python list named 'fruits' with three items: apple, banana, mango." },
-  { time: '05:47', icon: TerminalIcon, mode: 'brief', confidence: 94, text: "The terminal prints ['apple', 'banana', 'mango', 'orange']." },
-  { time: '08:21', icon: GraphIcon, mode: 'full explanation', confidence: 72, text: 'A diagram explains how list indices start from 0 and point to each item.' },
-];
+/**
+ * The hero diagram: a visual lesson on the left, the same lesson as audio on
+ * the right, Aster as the transform between them. It is the whole product in
+ * one picture.
+ */
+function HeroStage() {
+  const reduced = useReducedMotion();
 
-function HeroPreview() {
   return (
-    <Parallax speed={-0.18} clamp={140} className="mx-auto mt-20 max-w-4xl">
-      <TiltCard intensity={5} className="rounded-panel">
-        <div className="glass lift overflow-hidden rounded-panel p-2">
-          <div className="rounded-card bg-surface/80 p-5 sm:p-7">
-            <div className="flex items-center justify-between gap-4 border-b border-line pb-4">
-              <p className="truncate text-sm font-medium">Intro to Python Lists — Full Course</p>
-              <span className="shrink-0 rounded-full bg-moss-soft px-2.5 py-1 text-xs text-moss">
-                12 descriptions
-              </span>
+    <motion.div
+      initial={{ opacity: 0, y: 40, filter: 'blur(14px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 1.1, delay: 1.05, ease: [0.22, 1, 0.36, 1] }}
+      className="mx-auto mt-24 max-w-5xl"
+    >
+      <div className="hairline grain rounded-panel p-3 sm:p-5">
+        <div className="grid items-stretch gap-3 sm:grid-cols-[1fr_auto_1fr]">
+          {/* Visual lesson */}
+          <div className="panel-raised relative flex min-h-[15rem] flex-col justify-between rounded-card p-5">
+            <div className="flex flex-1 items-center justify-center">
+              <motion.span
+                whileHover={{ scale: 1.08 }}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-line-strong text-ink-soft"
+              >
+                <PlayIcon className="h-4 w-4" />
+              </motion.span>
             </div>
+            <span className="label-micro">Visual lesson</span>
+          </div>
 
-            <motion.ul
-              className="mt-4 space-y-2"
-              initial="hidden"
-              animate="visible"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.14, delayChildren: 1.4 } } }}
+          {/* Aster */}
+          <div className="flex flex-col items-center justify-center gap-2 px-2 py-4">
+            <motion.span
+              animate={reduced ? {} : { rotate: 360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
             >
-              {SAMPLE.map((row) => (
-                <motion.li
-                  key={row.time}
-                  variants={{
-                    hidden: { opacity: 0, x: -16, filter: 'blur(8px)' },
-                    visible: { opacity: 1, x: 0, filter: 'blur(0px)' },
-                  }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="group flex gap-3 rounded-card border border-transparent p-3 text-left transition-colors hover:border-line hover:bg-surface-raised/60"
-                >
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rust-soft text-rust transition-transform duration-300 group-hover:scale-110">
-                    <row.icon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-ink-faint">
-                      <span className="font-mono text-rust">{row.time}</span>
-                      <span className="rounded-full bg-ground-deep px-2 py-0.5">{row.mode}</span>
-                      <span>confidence {row.confidence}%</span>
-                    </div>
-                    <p className="mt-1 text-sm leading-relaxed text-ink-soft">{row.text}</p>
-                  </div>
-                </motion.li>
-              ))}
-            </motion.ul>
+              <AsterMark className="h-7 w-7" />
+            </motion.span>
+            <span className="label-micro">Aster</span>
+          </div>
 
-            <div className="mt-4 flex items-center gap-3 rounded-card bg-rust-soft/70 px-4 py-3 text-sm text-rust">
-              <Waveform />
-              Aster is speaking — press <kbd className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-xs text-ink">S</kbd> to skip
+          {/* Accessible audio */}
+          <div className="panel-raised relative flex min-h-[15rem] flex-col justify-between rounded-card p-5">
+            <div className="flex flex-1 items-center justify-center">
+              <Bars />
             </div>
+            <span className="label-micro">Accessible audio</span>
           </div>
         </div>
-      </TiltCard>
-    </Parallax>
+      </div>
+    </motion.div>
+  );
+}
+
+/** A dense waveform, each bar breathing on its own offset. */
+function Bars() {
+  const reduced = useReducedMotion();
+  // Rounded: an unrounded float serialises to different precision on the server
+  // than on the client, which React reports as a hydration mismatch.
+  const heights = Array.from({ length: 44 }, (_, i) =>
+    Math.round(30 + Math.abs(Math.sin(i * 0.9)) * 55 + (i % 3) * 6)
+  );
+
+  return (
+    <div className="flex h-16 items-center gap-[3px]" aria-hidden>
+      {heights.map((h, i) => (
+        <motion.span
+          key={i}
+          className="w-[2px] rounded-full bg-ink-soft/70"
+          style={{ height: `${h}%` }}
+          animate={reduced ? {} : { scaleY: [1, 0.45, 1] }}
+          transition={{
+            duration: 1.6,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            delay: (i % 11) * 0.13,
+          }}
+        />
+      ))}
+    </div>
   );
 }
