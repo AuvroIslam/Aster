@@ -55,14 +55,14 @@ export function UploadZone({ onDone }: { onDone: () => void }) {
               whileHover={{ y: -4 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               className={cn(
-                'glass lift flex w-full flex-col items-center rounded-panel border-2 border-dashed px-8 py-16 text-center transition-colors',
-                dragging ? 'border-rust bg-rust-soft/40' : 'border-line'
+                'panel flex w-full flex-col items-center rounded-panel border-2 border-dashed px-8 py-16 text-center transition-colors',
+                dragging ? 'border-line-strong bg-white/[0.06]' : 'border-line'
               )}
             >
               <motion.span
                 animate={dragging ? { rotate: [0, -8, 8, 0] } : {}}
                 transition={{ duration: 0.6 }}
-                className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rust-soft text-rust"
+                className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.06] text-ink"
               >
                 <DocIcon className="h-7 w-7" />
               </motion.span>
@@ -74,7 +74,7 @@ export function UploadZone({ onDone }: { onDone: () => void }) {
                 I read the words, then do the part a screen reader cannot — describe every figure,
                 table, chart and formula so you get what a sighted reader gets.
               </p>
-              <span className="mt-6 rounded-full bg-moss px-6 py-3 text-sm font-medium text-ground">
+              <span className="mt-6 rounded-full bg-ink px-6 py-3 text-sm font-medium text-ground">
                 Choose a file
               </span>
             </motion.button>
@@ -85,9 +85,9 @@ export function UploadZone({ onDone }: { onDone: () => void }) {
             initial={{ opacity: 0, scale: 0.97, filter: 'blur(10px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="glass lift rounded-panel p-8"
+            className="panel rounded-panel p-8"
           >
-            <p className="flex items-center gap-2 text-sm font-medium text-rust">
+            <p className="flex items-center gap-2 text-sm font-medium text-ink">
               <SparkIcon className="h-4 w-4" />
               Gemma is reading your chapter
             </p>
@@ -103,9 +103,9 @@ export function UploadZone({ onDone }: { onDone: () => void }) {
                       className={cn(
                         'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors duration-500',
                         done
-                          ? 'bg-moss text-ground'
+                          ? 'bg-ink text-ground'
                           : active
-                            ? 'bg-rust text-white'
+                            ? 'bg-ink text-ground'
                             : 'bg-ground-deep text-ink-faint'
                       )}
                     >
@@ -134,7 +134,7 @@ export function UploadZone({ onDone }: { onDone: () => void }) {
 
             <div className="mt-6 h-1 overflow-hidden rounded-full bg-line">
               <motion.div
-                className="h-full bg-gradient-to-r from-rust to-moss"
+                className="h-full bg-gradient-to-r from-ink to-ink-faint"
                 animate={{ width: `${Math.min(100, (stage / STAGES.length) * 100)}%` }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               />

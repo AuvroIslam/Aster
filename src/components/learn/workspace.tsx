@@ -119,10 +119,10 @@ export function Workspace() {
         {announcement}
       </p>
 
-      <header className="glass sticky top-0 z-30 border-b border-line">
+      <header className="panel sticky top-0 z-30 border-b border-line">
         <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AsterMark className="h-6 w-6 text-rust" />
+            <AsterMark className="h-6 w-6 text-ink" />
             <span className="tracking-tight">Aster</span>
           </Link>
           <span className="ml-2 hidden text-sm text-ink-faint sm:block">
@@ -132,18 +132,18 @@ export function Workspace() {
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/study"
-              className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-rust hover:text-rust sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-line-strong hover:text-ink sm:inline-flex"
             >
               <DocIcon className="h-3.5 w-3.5" />
               Notes and PDFs
             </Link>
             <button
               onClick={() => setShowSearch(true)}
-              className="rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-rust hover:text-rust"
+              className="rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-line-strong hover:text-ink"
             >
               Find a lesson
             </button>
-            <span className="rounded-full bg-moss-soft px-3 py-1 text-xs font-medium text-moss">
+            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-xs font-medium text-ink-soft">
               {practiceCount} {practiceCount === 1 ? 'concept' : 'concepts'} tracked
             </span>
           </div>
@@ -205,7 +205,7 @@ export function Workspace() {
           transition={{ duration: 0.6, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-5"
         >
-          <div className="glass flex gap-1 rounded-full p-1" role="tablist" aria-label="Assistant">
+          <div className="panel flex gap-1 rounded-full p-1" role="tablist" aria-label="Assistant">
             {[
               { id: 'tutor' as const, label: 'Tutor', icon: ChatIcon },
               { id: 'practice' as const, label: 'Practice', icon: TargetIcon },
@@ -217,14 +217,14 @@ export function Workspace() {
                 onClick={() => setTab(entry.id)}
                 className={cn(
                   'relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
-                  tab === entry.id ? 'text-white' : 'text-ink-soft hover:text-ink'
+                  tab === entry.id ? 'text-ground' : 'text-ink-soft hover:text-ink'
                 )}
               >
                 {tab === entry.id && (
                   <motion.span
                     layoutId="assistant-tab"
                     transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    className="absolute inset-0 rounded-full bg-rust"
+                    className="absolute inset-0 rounded-full bg-ink"
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-2">
@@ -234,7 +234,7 @@ export function Workspace() {
                     <span
                       className={cn(
                         'rounded-full px-1.5 text-[11px]',
-                        tab === 'practice' ? 'bg-white/25' : 'bg-rust-soft text-rust'
+                        tab === 'practice' ? 'bg-white/25' : 'bg-white/[0.06] text-ink'
                       )}
                     >
                       {practiceCount}

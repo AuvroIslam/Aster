@@ -39,10 +39,10 @@ export function SettingsPanel({
   speaking: boolean;
 }) {
   return (
-    <section className="glass lift rounded-panel" aria-label="Speech and display">
+    <section className="panel rounded-panel" aria-label="Speech and display">
       <header className="border-b border-line px-5 py-4">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <SpeakerIcon className="h-5 w-5 text-rust" />
+          <SpeakerIcon className="h-5 w-5 text-ink" />
           Speech and display
         </h2>
       </header>
@@ -76,7 +76,7 @@ export function SettingsPanel({
             </label>
             <motion.span
               key={rate}
-              initial={{ scale: 1.25, color: 'var(--rust)' }}
+              initial={{ scale: 1.25, color: 'var(--ink)' }}
               animate={{ scale: 1, color: 'var(--ink-soft)' }}
               className="font-mono text-sm"
             >
@@ -91,7 +91,7 @@ export function SettingsPanel({
             step={0.05}
             value={rate}
             onChange={(e) => onRate(Number(e.target.value))}
-            className="mt-2 w-full accent-rust"
+            className="mt-2 w-full accent-white"
           />
           <div className="mt-1 flex justify-between text-xs text-ink-faint">
             <span>0.5x</span>
@@ -108,7 +108,7 @@ export function SettingsPanel({
             id="lang"
             value={language}
             onChange={(e) => onLanguage(e.target.value)}
-            className="mt-2 w-full rounded-card border border-line bg-surface px-3 py-2.5 text-sm outline-none transition-colors focus:border-rust"
+            className="mt-2 w-full rounded-card border border-line bg-surface px-3 py-2.5 text-sm outline-none transition-colors focus:border-ink"
           >
             {LANGUAGES.map((entry) => (
               <option key={entry.code} value={entry.code}>
@@ -120,7 +120,7 @@ export function SettingsPanel({
             <motion.p
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mt-2 text-xs leading-relaxed text-amber"
+              className="mt-2 text-xs leading-relaxed text-live"
             >
               Bangla speech needs a Bangla voice. Microsoft Edge ships one; most other browsers
               need one installed first.
@@ -144,7 +144,7 @@ export function SettingsPanel({
 
         <div className="rounded-card border border-line bg-surface/60 p-4">
           <p className="flex items-center gap-2 text-sm font-medium">
-            <span className="text-rust">
+            <span className="text-ink">
               <Waveform active={speaking} bars={4} />
             </span>
             {speaking ? 'Aster is speaking' : 'Aster is quiet'}
@@ -158,12 +158,12 @@ export function SettingsPanel({
         </div>
 
         {/* Provenance: one model generates everything, and it is named. */}
-        <div className="flex items-start gap-3 rounded-card border border-moss/25 bg-moss-soft/50 p-4">
-          <span className="mt-0.5 text-moss">
+        <div className="flex items-start gap-3 rounded-card border border-line bg-white/[0.05] p-4">
+          <span className="mt-0.5 text-ink-soft">
             <SparkIcon className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-medium text-moss">Running on gemma-4-31b-it</p>
+            <p className="text-sm font-medium text-ink-soft">Running on gemma-4-31b-it</p>
             <p className="mt-1 text-xs leading-relaxed text-ink-soft">
               Every description, answer and question comes from Gemma — runnable locally, with no
               per-request API cost.
@@ -196,18 +196,18 @@ function NarrationOption({
       aria-pressed={active}
       className={cn(
         'relative w-full overflow-hidden rounded-card border p-3 text-left transition-colors duration-300',
-        active ? 'border-rust/40 bg-rust-soft/50' : 'border-line bg-surface/50 hover:border-rust/25'
+        active ? 'border-line-strong bg-white/[0.06]' : 'border-line bg-surface/50 hover:border-line-strong'
       )}
     >
       {active && (
         <motion.span
           layoutId="narration-active"
           transition={{ type: 'spring', stiffness: 400, damping: 34 }}
-          className="absolute inset-y-0 left-0 w-1 bg-rust"
+          className="absolute inset-y-0 left-0 w-1 bg-ink"
         />
       )}
       <span className="flex items-center gap-2 text-sm font-medium">
-        <EyeIcon className={cn('h-4 w-4', active ? 'text-rust' : 'text-ink-faint')} />
+        <EyeIcon className={cn('h-4 w-4', active ? 'text-ink' : 'text-ink-faint')} />
         {title}
       </span>
       <span className="mt-1 block text-xs leading-relaxed text-ink-soft">{body}</span>
@@ -239,7 +239,7 @@ function Toggle({
         onClick={() => onChange(!checked)}
         className={cn(
           'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-300',
-          checked ? 'bg-rust' : 'bg-line'
+          checked ? 'bg-ink' : 'bg-line'
         )}
       >
         <motion.span

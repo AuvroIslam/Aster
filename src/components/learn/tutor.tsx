@@ -104,10 +104,10 @@ export function TutorPanel({
   }));
 
   return (
-    <section className="glass lift rounded-panel" aria-label="Ask about the screen">
+    <section className="panel rounded-panel" aria-label="Ask about the screen">
       <header className="border-b border-line px-5 py-4">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <ChatIcon className="h-5 w-5 text-rust" />
+          <ChatIcon className="h-5 w-5 text-ink" />
           Ask about the screen
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-ink-faint">
@@ -127,9 +127,9 @@ export function TutorPanel({
               transition={{ duration: 0.4, delay: i * 0.04 }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="group flex items-center gap-2 rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left text-sm transition-colors hover:border-rust/40 hover:bg-rust-soft/40 disabled:opacity-50"
+              className="group flex items-center gap-2 rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left text-sm transition-colors hover:border-line-strong hover:bg-white/[0.08] disabled:opacity-50"
             >
-              <kbd className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-ground-deep font-mono text-[10px] text-ink-faint transition-colors group-hover:bg-rust group-hover:text-white">
+              <kbd className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-ground-deep font-mono text-[10px] text-ink-faint transition-colors group-hover:bg-ink group-hover:text-ground">
                 {preset.key}
               </kbd>
               <span className="truncate">{preset.label}</span>
@@ -154,14 +154,14 @@ export function TutorPanel({
             onChange={(e) => setDraft(e.target.value)}
             maxLength={300}
             placeholder="Type your question…"
-            className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none transition-colors placeholder:text-ink-faint focus:border-rust"
+            className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none transition-colors placeholder:text-ink-faint focus:border-ink"
           />
           <motion.button
             type="submit"
             disabled={thinking || !draft.trim()}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-moss px-5 py-3 text-sm font-medium text-ground disabled:opacity-40"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ground disabled:opacity-40"
           >
             Ask
             <SparkIcon className="h-4 w-4" />
@@ -174,7 +174,7 @@ export function TutorPanel({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 flex items-center gap-2 text-sm text-rust"
+              className="mt-3 flex items-center gap-2 text-sm text-ink"
             >
               <Waveform bars={4} />
               Looking at the frame at {formatTime(time)}…
@@ -205,7 +205,7 @@ export function TutorPanel({
                   <p
                     className={cn(
                       'mt-2 flex items-center gap-1.5 text-xs',
-                      entry.grounded ? 'text-moss' : 'text-amber'
+                      entry.grounded ? 'text-ink-soft' : 'text-live'
                     )}
                   >
                     {entry.grounded ? (

@@ -59,7 +59,7 @@ export function PracticeSheet({
 
   if (items.length === 0) {
     return (
-      <section className="glass lift rounded-panel p-6 text-center" aria-label="Practice">
+      <section className="panel rounded-panel p-6 text-center" aria-label="Practice">
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ground-deep text-ink-faint">
           <TargetIcon className="h-5 w-5" />
         </span>
@@ -82,10 +82,10 @@ export function PracticeSheet({
   }
 
   return (
-    <section className="glass lift rounded-panel" aria-label="Practice">
+    <section className="panel rounded-panel" aria-label="Practice">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <TargetIcon className="h-5 w-5 text-rust" />
+          <TargetIcon className="h-5 w-5 text-ink" />
           Practice
         </h2>
         <span className="text-xs text-ink-faint">
@@ -105,17 +105,17 @@ export function PracticeSheet({
             className={cn(
               'rounded-full px-2.5 py-1 font-medium',
               item.reason === 'both'
-                ? 'bg-rust text-white'
+                ? 'bg-ink text-ground'
                 : item.reason === 'asked'
-                  ? 'bg-rust-soft text-rust'
-                  : 'bg-moss-soft text-moss'
+                  ? 'bg-white/[0.06] text-ink'
+                  : 'bg-white/[0.05] text-ink-soft'
             )}
           >
             {explainReason(item.reason)}
           </span>
           <button
             onClick={() => onSeek(Math.max(0, item.sourceTime - 5))}
-            className="inline-flex items-center gap-1 text-ink-faint underline-offset-2 transition-colors hover:text-rust hover:underline"
+            className="inline-flex items-center gap-1 text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
           >
             <SpeakerIcon className="h-3.5 w-3.5" />
             {locate(item.sourceTime)}
@@ -144,7 +144,7 @@ export function PracticeSheet({
               rows={3}
               placeholder="Say it in your own words…"
               disabled={verdict !== 'unanswered'}
-              className="mt-4 w-full resize-none rounded-card border border-line bg-surface px-4 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-ink-faint focus:border-rust disabled:opacity-70"
+              className="mt-4 w-full resize-none rounded-card border border-line bg-surface px-4 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-ink-faint focus:border-ink disabled:opacity-70"
             />
 
             {verdict === 'unanswered' ? (
@@ -154,7 +154,7 @@ export function PracticeSheet({
                   disabled={!draft.trim()}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
-                  className="rounded-full bg-rust px-5 py-2.5 text-sm font-medium text-white disabled:opacity-40"
+                  className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-ground disabled:opacity-40"
                 >
                   Check my answer
                 </motion.button>
@@ -185,9 +185,9 @@ function Verdict({
   onNext: () => void;
 }) {
   const tone = {
-    correct: { label: 'That’s it.', className: 'border-moss/30 bg-moss-soft/60 text-moss' },
-    partial: { label: 'Halfway there.', className: 'border-amber/35 bg-amber/10 text-amber' },
-    missed: { label: 'Let me come at it differently.', className: 'border-rust/30 bg-rust-soft/60 text-rust' },
+    correct: { label: 'That’s it.', className: 'border-line bg-white/[0.05] text-ink-soft' },
+    partial: { label: 'Halfway there.', className: 'border-line-strong bg-white/[0.06] text-live' },
+    missed: { label: 'Let me come at it differently.', className: 'border-line-strong bg-white/[0.06] text-ink' },
     unanswered: { label: '', className: '' },
   }[verdict];
 
@@ -224,7 +224,7 @@ function Verdict({
           onClick={onNext}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
-          className="inline-flex items-center gap-2 rounded-full bg-moss px-5 py-2.5 text-sm font-medium text-ground"
+          className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-ground"
         >
           Next question
           <ArrowIcon className="h-4 w-4" />

@@ -36,7 +36,7 @@ export function Timeline({
   onReplay: (description: Description) => void;
 }) {
   return (
-    <section className="glass lift rounded-panel" aria-label="Audio descriptions">
+    <section className="panel rounded-panel" aria-label="Audio descriptions">
       <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-semibold tracking-tight">
           Audio descriptions{' '}
@@ -66,7 +66,7 @@ export function Timeline({
               <div
                 className={cn(
                   'group flex gap-3 px-5 py-4 transition-colors duration-300',
-                  isCurrent ? 'bg-rust-soft/50' : 'hover:bg-surface/60'
+                  isCurrent ? 'bg-white/[0.06]' : 'hover:bg-surface/60'
                 )}
               >
                 <button
@@ -75,9 +75,9 @@ export function Timeline({
                   className={cn(
                     'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300',
                     isCurrent
-                      ? 'bg-rust text-white'
+                      ? 'bg-ink text-ground'
                       : isPast
-                        ? 'bg-rust-soft text-rust'
+                        ? 'bg-white/[0.06] text-ink'
                         : 'bg-ground-deep text-ink-faint',
                     'group-hover:scale-110'
                   )}
@@ -87,12 +87,12 @@ export function Timeline({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-mono text-rust">{formatTime(description.time)}</span>
+                    <span className="font-mono text-ink">{formatTime(description.time)}</span>
                     <span
                       className={cn(
                         'rounded-full px-2 py-0.5',
                         description.mode === 'explain'
-                          ? 'bg-moss-soft text-moss'
+                          ? 'bg-white/[0.05] text-ink-soft'
                           : 'bg-ground-deep text-ink-faint'
                       )}
                     >
@@ -104,7 +104,7 @@ export function Timeline({
                     <span
                       className={cn(
                         'ml-auto',
-                        description.confidence < 0.8 ? 'text-amber' : 'text-ink-faint'
+                        description.confidence < 0.8 ? 'text-live' : 'text-ink-faint'
                       )}
                     >
                       confidence {Math.round(description.confidence * 100)}%
@@ -116,20 +116,20 @@ export function Timeline({
                   <div className="mt-2 flex items-center gap-3">
                     <button
                       onClick={() => onReplay(description)}
-                      className="inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-rust"
+                      className="inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-ink"
                     >
                       <SpeakerIcon className="h-3.5 w-3.5" />
                       Replay
                     </button>
                     <button
                       onClick={() => onSeek(Math.max(0, description.time - 4))}
-                      className="inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-rust"
+                      className="inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-ink"
                     >
                       <PlayIcon className="h-3.5 w-3.5" />
                       Play from here
                     </button>
                     {isHeard && (
-                      <span className="ml-auto rounded-full bg-moss-soft px-2 py-0.5 text-[11px] text-moss">
+                      <span className="ml-auto rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] text-ink-soft">
                         heard
                       </span>
                     )}

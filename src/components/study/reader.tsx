@@ -108,11 +108,11 @@ export function Reader() {
         initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="glass lift rounded-panel"
+        className="panel rounded-panel"
         aria-label="Document"
       >
         <header className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rust-soft text-rust">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] text-ink">
             <DocIcon className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export function Reader() {
             </h2>
             <p className="text-sm text-ink-faint">
               {studyDoc.pages} pages · {studyDoc.words.toLocaleString()} words ·{' '}
-              <span className="text-rust">{describedBlocks.length} visuals described</span>
+              <span className="text-ink">{describedBlocks.length} visuals described</span>
             </p>
           </div>
         </header>
@@ -140,13 +140,13 @@ export function Reader() {
                 transition={{ duration: 0.45, delay: Math.min(i * 0.05, 0.4) }}
                 className={cn(
                   'group flex gap-4 px-5 py-4 transition-colors duration-300',
-                  isSpeaking ? 'bg-rust-soft/50' : 'hover:bg-surface/50'
+                  isSpeaking ? 'bg-white/[0.06]' : 'hover:bg-surface/50'
                 )}
               >
                 <div className="flex w-14 shrink-0 flex-col items-center gap-2">
                   <span className="font-mono text-[11px] text-ink-faint">p{block.page}</span>
                   {block.described && (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rust-soft text-rust">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-ink">
                       <Icon className="h-4 w-4" />
                     </span>
                   )}
@@ -155,14 +155,14 @@ export function Reader() {
                 <div className="min-w-0 flex-1">
                   {block.described && (
                     <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
-                      <span className="rounded-full bg-rust px-2 py-0.5 text-white">
+                      <span className="rounded-full bg-ink px-2 py-0.5 text-ground">
                         {block.kind}
                       </span>
                       <span className="text-ink-faint">
                         described for you — a sighted reader sees this
                       </span>
                       {hasRead && (
-                        <span className="ml-auto inline-flex items-center gap-1 text-moss">
+                        <span className="ml-auto inline-flex items-center gap-1 text-ink-soft">
                           <CheckIcon className="h-3 w-3" strokeWidth={2.6} />
                           heard
                         </span>
@@ -183,12 +183,12 @@ export function Reader() {
 
                   <button
                     onClick={() => readAloud(block)}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-faint opacity-0 transition-all duration-300 hover:text-rust focus-visible:opacity-100 group-hover:opacity-100"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-faint opacity-0 transition-all duration-300 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
                   >
                     {isSpeaking ? (
                       <>
-                        <Waveform bars={4} className="h-3 text-rust" />
-                        <span className="text-rust">reading…</span>
+                        <Waveform bars={4} className="h-3 text-ink" />
+                        <span className="text-ink">reading…</span>
                       </>
                     ) : (
                       <>
@@ -210,7 +210,7 @@ export function Reader() {
         transition={{ duration: 0.6, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         className="space-y-5"
       >
-        <div className="glass flex gap-1 rounded-full p-1" role="tablist" aria-label="Document assistant">
+        <div className="panel flex gap-1 rounded-full p-1" role="tablist" aria-label="Document assistant">
           {[
             { id: 'ask' as const, label: 'Ask', icon: ChatIcon },
             { id: 'practice' as const, label: 'Quiz', icon: TargetIcon },
@@ -222,14 +222,14 @@ export function Reader() {
               onClick={() => setTab(entry.id)}
               className={cn(
                 'relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
-                tab === entry.id ? 'text-white' : 'text-ink-soft hover:text-ink'
+                tab === entry.id ? 'text-ground' : 'text-ink-soft hover:text-ink'
               )}
             >
               {tab === entry.id && (
                 <motion.span
                   layoutId="doc-tab"
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  className="absolute inset-0 rounded-full bg-rust"
+                  className="absolute inset-0 rounded-full bg-ink"
                 />
               )}
               <span className="relative z-10 flex items-center gap-2">
@@ -249,7 +249,7 @@ export function Reader() {
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           >
             {tab === 'ask' ? (
-              <section className="glass lift rounded-panel p-5" aria-label="Ask about this document">
+              <section className="panel rounded-panel p-5" aria-label="Ask about this document">
                 <h2 className="font-display text-lg font-semibold tracking-tight">
                   Ask about this chapter
                 </h2>
@@ -260,7 +260,7 @@ export function Reader() {
                       key={preset}
                       onClick={() => ask(preset)}
                       whileHover={{ x: 4 }}
-                      className="w-full rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left text-sm transition-colors hover:border-rust/40 hover:bg-rust-soft/40"
+                      className="w-full rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left text-sm transition-colors hover:border-line-strong hover:bg-white/[0.08]"
                     >
                       {preset}
                     </motion.button>
@@ -282,11 +282,11 @@ export function Reader() {
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Ask anything…"
-                    className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-rust"
+                    className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-ink"
                   />
                   <button
                     type="submit"
-                    className="shrink-0 rounded-full bg-moss px-5 py-3 text-sm font-medium text-ground"
+                    className="shrink-0 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ground"
                   >
                     Ask
                   </button>
@@ -304,7 +304,7 @@ export function Reader() {
                         className="rounded-card border border-line bg-surface/70 p-4"
                       >
                         <p className="text-sm font-medium">{entry.question}</p>
-                        <p className="mt-1 text-xs text-moss">
+                        <p className="mt-1 text-xs text-ink-soft">
                           {entry.grounded ? `Found on page ${entry.time}` : 'From the whole chapter'}
                         </p>
                         <p className="mt-2 text-sm leading-relaxed text-ink-soft">{entry.answer}</p>

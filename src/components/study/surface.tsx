@@ -12,16 +12,16 @@ export function StudySurface() {
 
   return (
     <div className="min-h-dvh">
-      <header className="glass sticky top-0 z-30 border-b border-line">
+      <header className="panel sticky top-0 z-30 border-b border-line">
         <div className="mx-auto flex max-w-[1500px] items-center gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AsterMark className="h-6 w-6 text-rust" />
+            <AsterMark className="h-6 w-6 text-ink" />
             <span className="tracking-tight">Aster</span>
           </Link>
           <span className="ml-2 hidden text-sm text-ink-faint sm:block">Notes and PDFs</span>
           <Link
             href="/learn"
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-rust hover:text-rust"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-line-strong hover:text-ink"
           >
             <SpeakerIcon className="h-3.5 w-3.5" />
             Back to the lesson

@@ -45,7 +45,7 @@ function Overlay({
             animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: 16, scale: 0.98, filter: 'blur(10px)' }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="glass lift w-full max-w-lg rounded-panel p-6 outline-none"
+            className="panel w-full max-w-lg rounded-panel p-6 outline-none"
           >
             {children}
           </motion.div>
@@ -82,7 +82,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
 
       <button
         onClick={onClose}
-        className="mt-5 w-full rounded-full bg-moss py-3 text-sm font-medium text-ground"
+        className="mt-5 w-full rounded-full bg-ink py-3 text-sm font-medium text-ground"
       >
         Close
       </button>
@@ -143,7 +143,7 @@ export function SearchDialog({
         onPointerLeave={release}
         animate={holding ? { scale: 1.03 } : { scale: 1 }}
         className={`mt-5 flex w-full items-center justify-center gap-3 rounded-card border-2 py-8 transition-colors ${
-          holding ? 'border-rust bg-rust-soft/60 text-rust' : 'border-dashed border-line text-ink-soft'
+          holding ? 'border-line-strong bg-white/[0.06] text-ink' : 'border-dashed border-line text-ink-soft'
         }`}
       >
         {holding ? (
@@ -165,16 +165,16 @@ export function SearchDialog({
             initial={{ opacity: 0, y: -8, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4 flex items-center gap-2 rounded-card border border-moss/25 bg-moss-soft/50 p-3 text-sm"
+            className="mt-4 flex items-center gap-2 rounded-card border border-line bg-white/[0.05] p-3 text-sm"
           >
-            <SparkIcon className="h-4 w-4 shrink-0 text-moss" />
+            <SparkIcon className="h-4 w-4 shrink-0 text-ink-soft" />
             <span className="flex-1">
               <span className="text-ink-faint">I heard: </span>
               {heardQuery}
             </span>
             <button
               onClick={() => onPick(heardQuery)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-moss px-3 py-1.5 text-xs font-medium text-ground"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-ground"
             >
               <PlayIcon className="h-3.5 w-3.5" />
               Play
@@ -198,11 +198,11 @@ export function SearchDialog({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Search, or paste a YouTube link…"
-          className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-rust"
+          className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-ink"
         />
         <button
           type="submit"
-          className="shrink-0 rounded-full bg-rust px-5 py-3 text-sm font-medium text-white"
+          className="shrink-0 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ground"
         >
           Go
         </button>
@@ -213,7 +213,7 @@ export function SearchDialog({
           <li key={suggestion}>
             <button
               onClick={() => onPick(suggestion)}
-              className="w-full rounded-card px-3 py-2 text-left text-sm text-ink-soft transition-colors hover:bg-surface/70 hover:text-rust"
+              className="w-full rounded-card px-3 py-2 text-left text-sm text-ink-soft transition-colors hover:bg-surface/70 hover:text-ink"
             >
               {suggestion}
             </button>
