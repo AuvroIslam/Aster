@@ -1,0 +1,210 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Aster design tokens
+   Palette is warm and paper-like: cream ground, deep olive ink, rust accent.
+   Every colour is defined here in the light block first, then overridden for
+   dark, so no colour has its only definition inside a media query.
+--------------------------------------------------------------------------- */
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-ground-deep: var(--ground-deep);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-glass: var(--glass);
+  --color-glass-edge: var(--glass-edge);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-moss: var(--moss);
+  --color-moss-soft: var(--moss-soft);
+  --color-rust: var(--rust);
+  --color-rust-soft: var(--rust-soft);
+  --color-amber: var(--amber);
+  --color-focus: var(--focus);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+
+  --radius-card: 1.25rem;
+  --radius-panel: 1.75rem;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root {
+  --ground: #f6f1e6;
+  --ground-deep: #ece4d4;
+  --surface: #fdfaf4;
+  --surface-raised: #ffffff;
+  --glass: rgb(253 250 244 / 0.62);
+  --glass-edge: rgb(255 255 255 / 0.7);
+  --line: #e2d8c3;
+  --ink: #26251f;
+  --ink-soft: #5a564a;
+  --ink-faint: #8c8677;
+  --moss: #3f5236;
+  --moss-soft: #dfe6d5;
+  --rust: #c0522a;
+  --rust-soft: #f6e2d6;
+  --amber: #b07d1e;
+  --focus: #c0522a;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
+
+  --shadow-lift: 0 1px 2px rgb(38 37 31 / 0.04), 0 12px 32px -12px rgb(38 37 31 / 0.16);
+  --shadow-glow: 0 0 0 1px rgb(192 82 42 / 0.12), 0 18px 48px -20px rgb(192 82 42 / 0.4);
+}
+
+:root:not([data-theme='light']) {
+  @media (prefers-color-scheme: dark) {
+    --ground: #16150f;
+    --ground-deep: #0e0d09;
+    --surface: #1e1c15;
+    --surface-raised: #262319;
+    --glass: rgb(38 35 25 / 0.6);
+    --glass-edge: rgb(255 255 255 / 0.08);
+    --line: #35311f;
+    --ink: #f2ecdd;
+    --ink-soft: #b8b09c;
+    --ink-faint: #8a836f;
+    --moss: #a9c092;
+    --moss-soft: #2a3323;
+    --rust: #e87a4d;
+    --rust-soft: #3b2419;
+    --amber: #d9a441;
+    --focus: #e87a4d;
+
+    --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 14px 36px -12px rgb(0 0 0 / 0.6);
+    --shadow-glow: 0 0 0 1px rgb(232 122 77 / 0.18), 0 18px 48px -20px rgb(232 122 77 / 0.35);
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #16150f;
+  --ground-deep: #0e0d09;
+  --surface: #1e1c15;
+  --surface-raised: #262319;
+  --glass: rgb(38 35 25 / 0.6);
+  --glass-edge: rgb(255 255 255 / 0.08);
+  --line: #35311f;
+  --ink: #f2ecdd;
+  --ink-soft: #b8b09c;
+  --ink-faint: #8a836f;
+  --moss: #a9c092;
+  --moss-soft: #2a3323;
+  --rust: #e87a4d;
+  --rust-soft: #3b2419;
+  --amber: #d9a441;
+  --focus: #e87a4d;
+
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 14px 36px -12px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px rgb(232 122 77 / 0.18), 0 18px 48px -20px rgb(232 122 77 / 0.35);
+}
+
+/* --------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A blind or low-vision learner navigates by focus. Never let it be invisible. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--rust);
+  color: var(--surface-raised);
+}
+
+@utility glass {
+  background-color: var(--glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-edge);
+}
+
+@utility lift {
+  box-shadow: var(--shadow-lift);
+}
+
+@utility glow {
+  box-shadow: var(--shadow-glow);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/* The aurora blobs behind the hero. Kept in CSS so they animate off the main
+   thread and cost nothing in React. */
+@keyframes aster-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -6%, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-5%, 4%, 0) scale(0.95);
+  }
+}
+
+@keyframes aster-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes aster-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-drift {
+  animation: aster-drift 22s var(--ease-in-out-soft) infinite;
+}
+
+.animate-pulse-soft {
+  animation: aster-pulse 6s ease-in-out infinite;
+}
+
+/* Accessibility-first product: motion is decoration, never information. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

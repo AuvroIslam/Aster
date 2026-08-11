@@ -1,0 +1,55 @@
+# --- Private reference material (MUST NEVER be published) ------------------
+# Iris2026 is prior work kept locally for architecture/style reference only.
+# It carries its own nested .git — committing it would push a gitlink.
+Iris2026/
+uiRef/
+
+# --- Local assistant config (must never reach the remote) ------------------
+CLAUDE.md
+.claude/
+.claude/settings.local.json
+
+# --- Dependencies ----------------------------------------------------------
+node_modules/
+
+# --- Secrets / environment -------------------------------------------------
+# Real keys live in .env; only the template (.env.example) is committed.
+.env
+.env.*
+!.env.example
+*.pem
+*.ppk
+
+# --- Build output ----------------------------------------------------------
+.next/
+out/
+dist/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# --- Runtime cache (downloaded media, extracted frames, timelines) ---------
+.cache/
+
+# --- Logs ------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# --- OS / editor junk ------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# --- Test coverage / scratch -----------------------------------------------
+coverage/
+.nyc_output/
+*.tmp
+
+# --- Deploy tooling --------------------------------------------------------
+.vercel
