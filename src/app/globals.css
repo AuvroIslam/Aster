@@ -178,6 +178,28 @@ body {
   text-wrap: balance;
 }
 
+/* The lesson scrubber paints its own track, so it must also paint its own
+   thumb — `appearance: none` removes the native one in WebKit. */
+.scrubber::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 15px;
+  width: 15px;
+  border-radius: 9999px;
+  background: var(--rust);
+  border: 2px solid var(--surface-raised);
+  cursor: pointer;
+}
+
+.scrubber::-moz-range-thumb {
+  height: 13px;
+  width: 13px;
+  border-radius: 9999px;
+  background: var(--rust);
+  border: 2px solid var(--surface-raised);
+  cursor: pointer;
+}
+
 /* The aurora blobs behind the hero. Kept in CSS so they animate off the main
    thread and cost nothing in React. */
 @keyframes aster-drift {

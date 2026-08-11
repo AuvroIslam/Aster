@@ -90,6 +90,8 @@ export function Stage({
         <label htmlFor="scrub" className="sr-only">
           Position in lesson
         </label>
+        {/* A native range so it is keyboard- and screen-reader-operable, with the
+            track painted to show progress (browsers do not fill it by default). */}
         <input
           id="scrub"
           type="range"
@@ -98,16 +100,15 @@ export function Stage({
           step={1}
           value={Math.floor(time)}
           onChange={(e) => onSeek(Number(e.target.value))}
-          className="w-full accent-rust"
+          className="scrubber w-full accent-rust"
+          style={{
+            background: `linear-gradient(to right, var(--rust) ${progress}%, var(--line) ${progress}%)`,
+            height: '4px',
+            borderRadius: '9999px',
+            appearance: 'none',
+          }}
         />
-        <div className="relative -mt-1 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
-          <motion.div
-            className="h-full bg-gradient-to-r from-rust to-amber"
-            style={{ width: `${progress}%` }}
-            transition={{ ease: 'linear' }}
-          />
-        </div>
-        <div className="mt-2 flex justify-between font-mono text-xs text-ink-faint">
+        <div className="mt-3 flex justify-between font-mono text-xs text-ink-faint">
           <span>{formatTime(time)}</span>
           <span>{formatTime(lesson.duration)}</span>
         </div>

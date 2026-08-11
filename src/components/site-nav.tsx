@@ -10,6 +10,7 @@ const links = [
   { href: '#how', label: 'How it works' },
   { href: '#method', label: 'Teaching method' },
   { href: '#features', label: 'Features' },
+  { href: '/study', label: 'Notes and PDFs' },
 ];
 
 export function SiteNav() {
@@ -64,7 +65,7 @@ export function SiteNav() {
             className="group relative overflow-hidden rounded-full bg-moss px-5 py-2.5 text-sm font-medium text-ground transition-transform duration-300 hover:scale-[1.03] active:scale-95"
           >
             <span className="relative z-10">Open Aster</span>
-            <span className="absolute inset-0 -translate-x-full bg-rust transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0" />
+            <span className="absolute inset-0 -translate-x-full bg-rust transition-transform duration-500 ease-out-soft group-hover:translate-x-0" />
           </Link>
         </div>
       </nav>
