@@ -1,0 +1,59 @@
+export type DescriptionMode = 'brief' | 'explain';
+
+export type VisualKind = 'code' | 'terminal' | 'diagram' | 'graph' | 'formula' | 'slide';
+
+/**
+ * One moment where Aster decided the screen carried information the narration
+ * left out. `concept` is what makes this more than a caption: it names the idea
+ * the visual was carrying, which is what practice is later built from.
+ */
+export interface Description {
+  id: string;
+  time: number;
+  mode: DescriptionMode;
+  kind: VisualKind;
+  text: string;
+  confidence: number;
+  concept: string;
+}
+
+/** A question the learner asked, and what Aster answered. */
+export interface LearnerQuestion {
+  id: string;
+  time: number;
+  question: string;
+  answer: string;
+  /** False when Aster could not confirm the answer from the frame. */
+  grounded: boolean;
+  concept: string;
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
+  channel: string;
+  duration: number;
+  language: string;
+  /** Moments Aster considered but chose to stay silent on. */
+  consideredMoments: number;
+  descriptions: Description[];
+}
+
+/** Why a concept ended up in the practice set. This is the whole teaching method. */
+export type PracticeReason = 'described' | 'asked' | 'both';
+
+export interface PracticeItem {
+  id: string;
+  concept: string;
+  reason: PracticeReason;
+  sourceTime: number;
+  /** Open response, because a list of options cannot be held in the ear. */
+  prompt: string;
+  /** What a correct answer must contain — used to judge a spoken explanation. */
+  expects: string[];
+  /** The different-angle re-explanation, used when the learner misses it. */
+  reexplain: string;
+  priority: number;
+}
+
+export type PracticeVerdict = 'unanswered' | 'correct' | 'partial' | 'missed';
