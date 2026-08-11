@@ -2,11 +2,19 @@
   "name": "aster",
   "version": "0.1.0",
   "private": true,
-  "description": "Aster turns visual learning content into an interactive, audio-first learning experience for blind and low-vision students.",
+  "description": "Aster transforms visual learning content into an interactive, audio-first learning experience for blind and low-vision students.",
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n api,web -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace server",
+    "dev:web": "next dev",
+    "doctor": "npm run doctor --workspace server",
     "build": "next build",
-    "start": "next start",
+    "start": "concurrently -n api,web -c yellow,cyan \"npm:start:api\" \"npm:start:web\"",
+    "start:api": "npm run start --workspace server",
+    "start:web": "next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -23,7 +31,8 @@
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "@tailwindcss/postcss": "^4.0.0",
+    "concurrently": "^9.1.2"
   },
   "engines": {
     "node": ">=20"
