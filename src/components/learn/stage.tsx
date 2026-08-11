@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import type { RefObject } from 'react';
 import { Waveform } from '@/components/motion/waveform';
 import { PlayIcon, PauseIcon, SpeakerIcon, MuteIcon, AsterMark } from '@/components/icons';
-import { formatTime, cn } from '@/lib/utils';
+import { formatTime, languageName, cn } from '@/lib/utils';
 import type { Description, Lesson } from '@/lib/types';
 
 export function Stage({
@@ -48,7 +48,7 @@ export function Stage({
           className="ml-auto flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-xs"
         >
           <AsterMark className="h-3 w-3" />
-          {lesson.language}
+          {languageName(lesson.language)}
         </motion.span>
       </header>
 

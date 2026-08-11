@@ -16,7 +16,7 @@ import { useLesson } from './use-lesson';
 import { useYouTube } from './use-youtube';
 import { AsterMark, ChatIcon, TargetIcon, DocIcon } from '@/components/icons';
 import { lesson as sampleLesson } from '@/lib/fixtures';
-import { cn, formatTime } from '@/lib/utils';
+import { cn, formatTime, languageName } from '@/lib/utils';
 import type { Description, LearnerQuestion } from '@/lib/types';
 
 type Tab = 'tutor' | 'practice';
@@ -216,7 +216,7 @@ export function Workspace() {
             onDescriptionsOn={playback.setDescriptionsOn}
             narration={playback.narration}
             onNarration={playback.setNarration}
-            language={lesson?.language ?? 'auto'}
+            language={languageName(lesson?.language ?? 'auto')}
             highContrast={highContrast}
             onHighContrast={setHighContrast}
             speaking={Boolean(playback.speaking)}

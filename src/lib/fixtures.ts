@@ -241,7 +241,9 @@ export const lesson: Lesson = {
   title: 'Binary Search Trees and AVL Balancing — Full Walkthrough',
   channel: 'Algorithms, Properly Explained',
   duration: 748,
-  language: 'English',
+  // A BCP-47 tag, not a display name — this value is handed straight to
+  // speechSynthesis for voice matching.
+  language: 'en',
   consideredMoments: 31,
   descriptions,
 };
