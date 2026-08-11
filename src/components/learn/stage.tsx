@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Waveform } from '@/components/motion/waveform';
 import { PlayIcon, PauseIcon, SpeakerIcon, EyeIcon } from '@/components/icons';
-import { formatTime } from '@/lib/utils';
+import { formatTime, cn } from '@/lib/utils';
 import type { Description, Lesson } from '@/lib/types';
 
 export function Stage({
@@ -70,17 +70,29 @@ export function Stage({
           )}
         </AnimatePresence>
 
+        {/* While an explanation is holding playback the overlay card owns the
+            centre, so the play control moves out from under it. */}
         <button
           onClick={onToggle}
           aria-label={playing ? 'Pause' : 'Play'}
-          className="group absolute inset-0 grid place-items-center"
+          className={cn(
+            'group absolute inset-0 grid',
+            holding ? 'place-items-end p-4' : 'place-items-center'
+          )}
         >
           <motion.span
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.94 }}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-moss/90 text-white opacity-0 backdrop-blur transition-opacity duration-300 group-hover:opacity-100 focus-visible:opacity-100"
+            className={cn(
+              'flex items-center justify-center rounded-full bg-moss/90 text-white opacity-0 backdrop-blur transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100',
+              holding ? 'h-11 w-11' : 'h-16 w-16'
+            )}
           >
-            {playing ? <PauseIcon className="h-7 w-7" /> : <PlayIcon className="h-7 w-7" />}
+            {playing ? (
+              <PauseIcon className={holding ? 'h-5 w-5' : 'h-7 w-7'} />
+            ) : (
+              <PlayIcon className={holding ? 'h-5 w-5' : 'h-7 w-7'} />
+            )}
           </motion.span>
         </button>
       </div>

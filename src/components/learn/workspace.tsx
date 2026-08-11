@@ -144,7 +144,7 @@ export function Workspace() {
               Find a lesson
             </button>
             <span className="rounded-full bg-moss-soft px-3 py-1 text-xs font-medium text-moss">
-              {practiceCount} concepts tracked
+              {practiceCount} {practiceCount === 1 ? 'concept' : 'concepts'} tracked
             </span>
           </div>
         </div>
