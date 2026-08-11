@@ -9,43 +9,72 @@ import { TutorPanel, type TutorHandle } from './tutor';
 import { PracticeSheet } from './practice';
 import { SettingsPanel } from './settings';
 import { ShortcutsDialog, SearchDialog } from './dialogs';
+import { UrlBar, Processing, EmptyStage } from './loader';
 import { usePlayback } from './use-playback';
 import { useShortcuts } from './use-shortcuts';
+import { useLesson } from './use-lesson';
+import { useYouTube } from './use-youtube';
 import { AsterMark, ChatIcon, TargetIcon, DocIcon } from '@/components/icons';
-import { lesson } from '@/lib/fixtures';
+import { lesson as sampleLesson } from '@/lib/fixtures';
 import { cn, formatTime } from '@/lib/utils';
-import type { LearnerQuestion } from '@/lib/types';
+import type { Description, LearnerQuestion } from '@/lib/types';
 
 type Tab = 'tutor' | 'practice';
 
 export function Workspace() {
-  const playback = usePlayback(lesson.descriptions, lesson.duration);
+  const loader = useLesson();
+  const [useSample, setUseSample] = useState(false);
+
+  const lesson = loader.lesson ?? (useSample ? sampleLesson : null);
+  const live = Boolean(loader.lesson);
+
   const [asked, setAsked] = useState<LearnerQuestion[]>([]);
   const [tab, setTab] = useState<Tab>('tutor');
-  const [language, setLanguage] = useState('auto');
   const [highContrast, setHighContrast] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-
-  /** Announced to a screen reader whenever the app changes state on its own. */
   const [announcement, setAnnouncement] = useState('');
+
   const tutorRef = useRef<TutorHandle>(null);
-  const lastSpokenRef = useRef(playback.speaking);
+  const lastSpokenRef = useRef<Description | null>(null);
+  const playbackRef = useRef<ReturnType<typeof usePlayback> | null>(null);
+
+  const youtube = useYouTube({
+    videoId: live ? loader.videoId : null,
+    // Reads through a ref because the player is created before playback exists.
+    onStateChange: (isPlaying) => playbackRef.current?.syncPlaying(isPlaying),
+  });
+
+  const playback = usePlayback(
+    lesson?.descriptions ?? [],
+    lesson?.duration ?? 0,
+    live ? youtube.bridge : null,
+    lesson?.language ?? 'en'
+  );
+  playbackRef.current = playback;
 
   useEffect(() => {
     document.documentElement.dataset.contrast = highContrast ? 'high' : '';
   }, [highContrast]);
 
-  // Remember the last thing spoken so R can replay it after it has finished.
   useEffect(() => {
     if (playback.speaking) lastSpokenRef.current = playback.speaking;
   }, [playback.speaking]);
 
+  // A new lesson re-arms the schedule and clears the session's question log.
+  const loadedId = loader.lesson?.id;
+  useEffect(() => {
+    if (!loadedId) return;
+    playbackRef.current?.reset();
+    setAsked([]);
+  }, [loadedId]);
+
   /** The frame Aster last described — what a question gets grounded against. */
   const nearest = useMemo(() => {
+    if (!lesson) return null;
     const past = lesson.descriptions.filter((d) => d.time <= playback.time);
     return past.length ? past[past.length - 1] : null;
-  }, [playback.time]);
+  }, [lesson, playback.time]);
 
   const heardIds = useMemo(() => new Set(playback.heard.map((d) => d.id)), [playback.heard]);
 
@@ -109,43 +138,56 @@ export function Workspace() {
         },
       }),
       [playback, announce]
-    )
+    ),
+    Boolean(lesson)
   );
+
+  const busy = loader.phase === 'loading' || loader.phase === 'processing';
 
   return (
     <div className="min-h-dvh">
-      {/* Two live regions: state changes are polite, errors would be assertive. */}
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
 
-      <header className="panel sticky top-0 z-30 border-b border-line">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AsterMark className="h-6 w-6" />
+      <header className="panel sticky top-0 z-30 border-x-0 border-t-0">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
+          <Link href="/" className="flex items-center gap-2 font-medium">
+            <AsterMark className="h-5 w-5" />
             <span className="tracking-tight">Aster</span>
           </Link>
-          <span className="ml-2 hidden text-sm text-ink-faint sm:block">
-            {playback.playing ? 'Lesson playing' : 'Lesson paused'}
-          </span>
+
+          <div className="order-3 w-full sm:order-none sm:w-auto sm:flex-1">
+            <UrlBar
+              onLoad={(url) => {
+                setUseSample(false);
+                void loader.load(url);
+              }}
+              busy={busy}
+              onDemo={() => setUseSample(true)}
+              showDemo={!lesson}
+            />
+          </div>
 
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/study"
-              className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-line-strong hover:text-ink sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs transition-colors hover:border-line-strong sm:inline-flex"
             >
               <DocIcon className="h-3.5 w-3.5" />
               Notes and PDFs
             </Link>
             <button
               onClick={() => setShowSearch(true)}
-              className="rounded-full border border-line px-3 py-1.5 text-xs font-medium transition-colors hover:border-line-strong hover:text-ink"
+              className="rounded-full border border-line px-3 py-1.5 text-xs transition-colors hover:border-line-strong"
             >
               Find a lesson
             </button>
-            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-xs font-medium text-ink-soft">
-              {practiceCount} {practiceCount === 1 ? 'concept' : 'concepts'} tracked
-            </span>
+            {lesson && (
+              <span className="rounded-full bg-white/[0.05] px-3 py-1 text-xs text-ink-soft">
+                {practiceCount} {practiceCount === 1 ? 'concept' : 'concepts'} tracked
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -163,15 +205,24 @@ export function Workspace() {
           <SettingsPanel
             rate={playback.rate}
             onRate={playback.setRate}
+            volume={playback.volume}
+            onVolume={playback.setVolume}
+            voiceURI={playback.voiceURI}
+            onVoiceURI={playback.setVoiceURI}
+            voices={playback.voices}
+            voiceAvailable={playback.voiceAvailable}
+            speechSupported={playback.speechSupported}
             descriptionsOn={playback.descriptionsOn}
             onDescriptionsOn={playback.setDescriptionsOn}
             narration={playback.narration}
             onNarration={playback.setNarration}
-            language={language}
-            onLanguage={setLanguage}
+            language={lesson?.language ?? 'auto'}
             highContrast={highContrast}
             onHighContrast={setHighContrast}
             speaking={Boolean(playback.speaking)}
+            onTestVoice={() =>
+              void playback.speakText('This is how Aster will describe what is on screen.')
+            }
           />
         </motion.div>
 
@@ -181,22 +232,46 @@ export function Workspace() {
           transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-5"
         >
-          <Stage
-            lesson={lesson}
-            time={playback.time}
-            playing={playback.playing}
-            speaking={playback.speaking}
-            holding={playback.holding}
-            onToggle={playback.toggle}
-            onSeek={playback.seek}
-          />
-          <Timeline
-            descriptions={lesson.descriptions}
-            time={playback.time}
-            heardIds={heardIds}
-            onSeek={playback.seek}
-            onReplay={playback.replay}
-          />
+          <AnimatePresence mode="wait">
+            {busy || loader.phase === 'error' ? (
+              <Processing
+                key="processing"
+                phase={loader.phase}
+                progress={loader.progress}
+                error={loader.error}
+                onRetry={loader.clear}
+                onDemo={() => {
+                  loader.clear();
+                  setUseSample(true);
+                }}
+              />
+            ) : lesson ? (
+              <motion.div key="lesson" className="space-y-5">
+                <Stage
+                  lesson={lesson}
+                  time={playback.time}
+                  playing={playback.playing}
+                  speaking={playback.speaking}
+                  holding={playback.holding}
+                  onToggle={playback.toggle}
+                  onSeek={playback.seek}
+                  playerHost={youtube.hostRef}
+                  live={live}
+                  muted={youtube.muted}
+                  onMute={live ? youtube.toggleMute : undefined}
+                />
+                <Timeline
+                  descriptions={lesson.descriptions}
+                  time={playback.time}
+                  heardIds={heardIds}
+                  onSeek={playback.seek}
+                  onReplay={playback.replay}
+                />
+              </motion.div>
+            ) : (
+              <EmptyStage key="empty" onDemo={() => setUseSample(true)} />
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <motion.div
@@ -234,7 +309,7 @@ export function Workspace() {
                     <span
                       className={cn(
                         'rounded-full px-1.5 text-[11px]',
-                        tab === 'practice' ? 'bg-white/25' : 'bg-white/[0.06] text-ink'
+                        tab === 'practice' ? 'bg-ground/20' : 'bg-white/[0.08] text-ink-soft'
                       )}
                     >
                       {practiceCount}
@@ -259,10 +334,12 @@ export function Workspace() {
                   nearest={nearest}
                   asked={asked}
                   handleRef={tutorRef}
+                  videoId={live ? loader.videoId : null}
                   onAsk={(question) => {
                     setAsked((prev) => [...prev, question]);
                     announce('Answer ready');
                   }}
+                  onSpeak={(text) => void playback.speakText(text)}
                 />
               ) : (
                 <PracticeSheet
@@ -283,9 +360,10 @@ export function Workspace() {
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}
-        onPick={(query) => {
+        onPick={(url) => {
           setShowSearch(false);
-          announce(`Loading ${query}`);
+          setUseSample(false);
+          void loader.load(url);
         }}
       />
     </div>

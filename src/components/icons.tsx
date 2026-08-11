@@ -38,6 +38,15 @@ export function SpeakerIcon(props: IconProps) {
   );
 }
 
+export function MuteIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9.5v5h3.5L12 19V5L7.5 9.5z" />
+      <path d="M16.5 10l4 4M20.5 10l-4 4" />
+    </svg>
+  );
+}
+
 export function EyeIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

@@ -1,8 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
+import type { RefObject } from 'react';
 import { Waveform } from '@/components/motion/waveform';
-import { PlayIcon, PauseIcon, SpeakerIcon, AsterMark } from '@/components/icons';
+import { PlayIcon, PauseIcon, SpeakerIcon, MuteIcon, AsterMark } from '@/components/icons';
 import { formatTime, cn } from '@/lib/utils';
 import type { Description, Lesson } from '@/lib/types';
 
@@ -14,6 +15,10 @@ export function Stage({
   holding,
   onToggle,
   onSeek,
+  playerHost,
+  live = false,
+  muted = false,
+  onMute,
 }: {
   lesson: Lesson;
   time: number;
@@ -22,6 +27,11 @@ export function Stage({
   holding: boolean;
   onToggle: () => void;
   onSeek: (seconds: number) => void;
+  /** Where the YouTube iframe mounts. Absent in fixture mode. */
+  playerHost?: RefObject<HTMLDivElement | null>;
+  live?: boolean;
+  muted?: boolean;
+  onMute?: () => void;
 }) {
   const progress = (time / lesson.duration) * 100;
 
@@ -50,7 +60,19 @@ export function Stage({
       {/* The lesson surface. Pure black so described content reads as "the
           screen" rather than as part of the app. */}
       <div className="relative aspect-video overflow-hidden border-y border-line bg-ground-deep">
-        <FrameArt kind={speaking?.kind} />
+        {live ? (
+          // The iframe is hidden from assistive tech and cannot take focus:
+          // a blind learner must never land inside a player they cannot drive.
+          // Every meaningful control lives in Aster's own UI below.
+          <div
+            ref={playerHost}
+            aria-hidden
+            tabIndex={-1}
+            className="pointer-events-none absolute inset-0 h-full w-full [&_iframe]:h-full [&_iframe]:w-full"
+          />
+        ) : (
+          <FrameArt kind={speaking?.kind} />
+        )}
 
         <AnimatePresence>
           {holding && (
@@ -133,7 +155,14 @@ export function Stage({
         <span className="shrink-0 font-mono text-xs text-ink-faint">
           {formatTime(time)} / {formatTime(lesson.duration)}
         </span>
-        <SpeakerIcon className="h-4 w-4 shrink-0 text-ink-faint" />
+        <button
+          onClick={onMute}
+          disabled={!onMute}
+          aria-label={muted ? 'Unmute video' : 'Mute video'}
+          className="shrink-0 text-ink-faint transition-colors hover:text-ink disabled:opacity-40"
+        >
+          {muted ? <MuteIcon className="h-4 w-4" /> : <SpeakerIcon className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* What Aster is saying right now */}

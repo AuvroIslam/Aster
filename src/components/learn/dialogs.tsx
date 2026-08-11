@@ -3,8 +3,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { SHORTCUTS } from './use-shortcuts';
+import { useVoiceSearch } from './use-voice-search';
 import { SpeakerIcon, SparkIcon, PlayIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
+import { formatTime, cn } from '@/lib/utils';
 
 function Overlay({
   open,
@@ -90,17 +92,12 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
   );
 }
 
-const SUGGESTIONS = [
-  'AVL tree rotations explained',
-  'Python list comprehensions',
-  'পর্যায়বৃত্ত গতি — পদার্থবিজ্ঞান',
-  'How gradient descent works',
-];
 
 /**
- * Voice search. Holding W records; releasing transcribes and searches. The
- * whole flow is reachable without ever seeing the results list — the top
- * result plays automatically.
+ * Find a lesson: hold to speak, or type. Spoken search records a clip, the
+ * server transcribes it with Whisper and searches YouTube. Fully reachable
+ * without sight — the results list is keyboard-navigable and the first result
+ * is focusable immediately.
  */
 export function SearchDialog({
   open,
@@ -109,84 +106,72 @@ export function SearchDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onPick: (query: string) => void;
+  /** Receives a YouTube URL ready to load. */
+  onPick: (url: string) => void;
 }) {
-  const [holding, setHolding] = useState(false);
-  const [heardQuery, setHeardQuery] = useState('');
+  const voice = useVoiceSearch();
   const [draft, setDraft] = useState('');
 
   useEffect(() => {
     if (!open) {
-      setHolding(false);
-      setHeardQuery('');
+      voice.reset();
       setDraft('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  function release() {
-    if (!holding) return;
-    setHolding(false);
-    // Stands in for Whisper: transcribe, then search, then play the top result.
-    setTimeout(() => setHeardQuery(SUGGESTIONS[0]), 600);
-  }
+  const recording = voice.state === 'recording';
+  const busy = voice.state === 'transcribing';
 
   return (
-    <Overlay open={open} onClose={onClose} label="Find a video">
-      <h2 className="font-display text-xl font-semibold tracking-tight">Find a lesson</h2>
+    <Overlay open={open} onClose={onClose} label="Find a lesson">
+      <h2 className="text-xl font-medium tracking-tight">Find a lesson</h2>
       <p className="mt-1 text-sm text-ink-faint">
-        Hold the button and speak, or type. The top result starts on its own.
+        Hold to speak, type a search, or paste a YouTube link.
       </p>
 
-      <motion.button
-        onPointerDown={() => setHolding(true)}
-        onPointerUp={release}
-        onPointerLeave={release}
-        animate={holding ? { scale: 1.03 } : { scale: 1 }}
-        className={`mt-5 flex w-full items-center justify-center gap-3 rounded-card border-2 py-8 transition-colors ${
-          holding ? 'border-line-strong bg-white/[0.06] text-ink' : 'border-dashed border-line text-ink-soft'
-        }`}
-      >
-        {holding ? (
-          <>
-            <Waveform bars={7} className="h-6" />
-            Listening — release to search
-          </>
-        ) : (
-          <>
-            <SpeakerIcon className="h-5 w-5" />
-            Hold to speak <kbd className="rounded bg-ground-deep px-1.5 py-0.5 font-mono text-xs">W</kbd>
-          </>
-        )}
-      </motion.button>
-
-      <AnimatePresence>
-        {heardQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 flex items-center gap-2 rounded-card border border-line bg-white/[0.05] p-3 text-sm"
-          >
-            <SparkIcon className="h-4 w-4 shrink-0 text-ink-soft" />
-            <span className="flex-1">
-              <span className="text-ink-faint">I heard: </span>
-              {heardQuery}
-            </span>
-            <button
-              onClick={() => onPick(heardQuery)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-ground"
-            >
-              <PlayIcon className="h-3.5 w-3.5" />
-              Play
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {voice.available && (
+        <motion.button
+          onPointerDown={() => void voice.start()}
+          onPointerUp={() => void voice.stop()}
+          onPointerLeave={() => recording && void voice.stop()}
+          disabled={busy}
+          animate={recording ? { scale: 1.02 } : { scale: 1 }}
+          className={cn(
+            'mt-5 flex w-full items-center justify-center gap-3 rounded-card border-2 py-8 transition-colors',
+            recording
+              ? 'border-bloom bg-white/[0.05] text-bloom'
+              : 'border-dashed border-line text-ink-soft hover:border-line-strong'
+          )}
+        >
+          {recording ? (
+            <>
+              <Waveform bars={7} className="h-6" />
+              Listening — release to search
+            </>
+          ) : busy ? (
+            <>
+              <Waveform bars={4} className="h-4" />
+              Transcribing…
+            </>
+          ) : (
+            <>
+              <SpeakerIcon className="h-5 w-5" />
+              Hold to speak{' '}
+              <kbd className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs">W</kbd>
+            </>
+          )}
+        </motion.button>
+      )}
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (draft.trim()) onPick(draft);
+          const value = draft.trim();
+          if (!value) return;
+          // A pasted link skips search entirely.
+          if (/youtu\.?be/.test(value)) onPick(value);
+          else void voice.searchText(value);
         }}
         className="mt-4 flex gap-2"
       >
@@ -202,24 +187,59 @@ export function SearchDialog({
         />
         <button
           type="submit"
-          className="shrink-0 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ground"
+          disabled={busy || !draft.trim()}
+          className="shrink-0 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ground disabled:opacity-40"
         >
           Go
         </button>
       </form>
 
-      <ul className="mt-4 space-y-1">
-        {SUGGESTIONS.map((suggestion) => (
-          <li key={suggestion}>
-            <button
-              onClick={() => onPick(suggestion)}
-              className="w-full rounded-card px-3 py-2 text-left text-sm text-ink-soft transition-colors hover:bg-surface/70 hover:text-ink"
-            >
-              {suggestion}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <AnimatePresence>
+        {voice.heard && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 flex items-center gap-2 text-sm text-ink-soft"
+          >
+            <SparkIcon className="h-4 w-4 shrink-0 text-bloom" />
+            <span className="text-ink-faint">I heard:</span> {voice.heard}
+          </motion.p>
+        )}
+        {voice.error && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            role="alert"
+            className="mt-4 text-sm text-live"
+          >
+            {voice.error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {voice.results.length > 0 && (
+        <ul className="mt-4 max-h-[40vh] space-y-1 overflow-y-auto" aria-label="Search results">
+          {voice.results.map((result) => (
+            <li key={result.id}>
+              <button
+                onClick={() => onPick(result.url)}
+                className="flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <PlayIcon className="h-4 w-4 shrink-0 text-ink-faint" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm">{result.title}</span>
+                  <span className="block truncate text-xs text-ink-faint">
+                    {result.channel}
+                    {result.duration ? ` · ${formatTime(result.duration)}` : ''}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </Overlay>
   );
 }

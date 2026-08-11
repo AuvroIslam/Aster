@@ -2,31 +2,33 @@
 
 import { AnimatePresence, motion } from 'motion/react';
 import { useImperativeHandle, useRef, useState, type RefObject } from 'react';
-import { ChatIcon, SparkIcon, CheckIcon, EyeIcon } from '@/components/icons';
+import { ChatIcon, SparkIcon, CheckIcon, EyeIcon, SpeakerIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
+import { api, ApiError } from '@/lib/api';
 import { formatTime, cn } from '@/lib/utils';
 import type { Description, LearnerQuestion } from '@/lib/types';
 
 const PRESETS = [
-  { key: '1', label: 'What’s on screen?' },
-  { key: '2', label: 'Read the code' },
-  { key: '3', label: 'Read the terminal' },
-  { key: '4', label: 'Describe the diagram' },
-  { key: '5', label: 'Explain the formula' },
-  { key: '6', label: 'Say it more simply' },
-  { key: '7', label: 'Why does this matter?' },
-  { key: '8', label: 'What changed?' },
+  { key: '1', id: 'whats-on-screen', label: 'What’s on screen?' },
+  { key: '2', id: 'read-the-code', label: 'Read the code' },
+  { key: '3', id: 'read-the-terminal', label: 'Read the terminal' },
+  { key: '4', id: 'describe-the-diagram', label: 'Describe the diagram' },
+  { key: '5', id: 'explain-the-formula', label: 'Explain the formula' },
+  { key: '6', id: 'simpler', label: 'Say it more simply' },
+  { key: '7', id: 'why-it-matters', label: 'Why does this matter?' },
+  { key: '8', id: 'what-changed', label: 'What changed?' },
 ];
 
 /**
- * Builds an answer grounded in the frame Aster last described. When there is no
- * described visual nearby it says so rather than inventing one — the same rule
- * that governs descriptions: silence beats a confident guess.
+ * Offline fallback, used only when there is no live video to ground against —
+ * the sample lesson. It never invents a frame: with nothing described nearby it
+ * says so, which is the same rule the server applies.
  */
-function answerFor(preset: string, nearest: Description | null) {
+function localAnswer(preset: string, nearest: Description | null) {
   if (!nearest) {
     return {
-      text: 'Nothing on screen right now carries information the narration is leaving out. Ask again once something is drawn or written.',
+      answer:
+        'Nothing on screen right now carries information the narration is leaving out. Ask again once something is drawn or written.',
       grounded: false,
       concept: 'unanchored',
     };
@@ -44,13 +46,12 @@ function answerFor(preset: string, nearest: Description | null) {
   };
 
   return {
-    text: map[preset] ?? nearest.text,
+    answer: map[preset] ?? nearest.text,
     grounded: nearest.confidence >= 0.8,
     concept: nearest.concept,
   };
 }
 
-/** Lets the keyboard shortcuts drive the panel: A focuses it, 1–8 ask. */
 export interface TutorHandle {
   focus: () => void;
   askPreset: (index: number) => void;
@@ -62,52 +63,91 @@ export function TutorPanel({
   asked,
   onAsk,
   handleRef,
+  videoId,
+  onSpeak,
 }: {
   time: number;
   nearest: Description | null;
   asked: LearnerQuestion[];
   onAsk: (question: LearnerQuestion) => void;
   handleRef?: RefObject<TutorHandle | null>;
+  /** When present, questions are answered by the model against a real frame. */
+  videoId?: string | null;
+  onSpeak?: (text: string) => void;
 }) {
   const [draft, setDraft] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  function ask(question: string) {
-    if (!question.trim() || thinking) return;
+  async function ask(question: string, presetId?: string) {
+    const text = question.trim();
+    if (!text || thinking) return;
+
     setThinking(true);
+    setFailure(null);
+    abortRef.current?.abort();
 
-    const { text, grounded, concept } = answerFor(question, nearest);
+    try {
+      let result: { answer: string; grounded: boolean; concept: string };
 
-    // A beat of latency so the thinking state is visible; the real call
-    // replaces this timeout and nothing else.
-    setTimeout(() => {
+      if (videoId) {
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const wire = await api.askFrame({
+          videoId,
+          time,
+          question: text,
+          presetId,
+          signal: controller.signal,
+        });
+        result = {
+          answer: wire.answer,
+          grounded: wire.grounded,
+          // The server may not name a concept; anchor to the nearest described
+          // visual so the answer still feeds gap-driven practice.
+          concept: wire.concept ?? nearest?.concept ?? 'unanchored',
+        };
+      } else {
+        await new Promise((r) => setTimeout(r, 500));
+        result = localAnswer(text, nearest);
+      }
+
       onAsk({
         id: `q-${Date.now()}`,
         time,
-        question,
-        answer: text,
-        grounded,
-        concept,
+        question: text,
+        answer: result.answer,
+        grounded: result.grounded,
+        concept: result.concept,
       });
-      setThinking(false);
+
+      onSpeak?.(result.answer);
       setDraft('');
-    }, 700);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setFailure(
+        err instanceof ApiError ? err.message : 'Could not reach the server to answer that.'
+      );
+    } finally {
+      setThinking(false);
+    }
   }
 
   useImperativeHandle(handleRef, () => ({
     focus: () => inputRef.current?.focus(),
     askPreset: (index: number) => {
       const preset = PRESETS[index];
-      if (preset) ask(preset.label);
+      if (preset) void ask(preset.label, preset.id);
     },
   }));
 
   return (
     <section className="panel rounded-panel" aria-label="Ask about the screen">
       <header className="border-b border-line px-5 py-4">
-        <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <ChatIcon className="h-5 w-5 text-ink" />
+        <h2 className="flex items-center gap-2 text-lg font-medium tracking-tight">
+          <ChatIcon className="h-5 w-5 text-bloom" />
           Ask about the screen
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-ink-faint">
@@ -120,16 +160,16 @@ export function TutorPanel({
           {PRESETS.map((preset, i) => (
             <motion.button
               key={preset.key}
-              onClick={() => ask(preset.label)}
+              onClick={() => void ask(preset.label, preset.id)}
               disabled={thinking}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.04 }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="group flex items-center gap-2 rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left text-sm transition-colors hover:border-line-strong hover:bg-white/[0.08] disabled:opacity-50"
+              className="group flex items-center gap-2 rounded-card border border-line bg-surface-raised px-3 py-2.5 text-left text-sm transition-colors hover:border-line-strong disabled:opacity-50"
             >
-              <kbd className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-ground-deep font-mono text-[10px] text-ink-faint transition-colors group-hover:bg-ink group-hover:text-ground">
+              <kbd className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/[0.06] font-mono text-[10px] text-ink-faint transition-colors group-hover:bg-bloom group-hover:text-ground">
                 {preset.key}
               </kbd>
               <span className="truncate">{preset.label}</span>
@@ -140,7 +180,7 @@ export function TutorPanel({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            ask(draft);
+            void ask(draft);
           }}
           className="mt-4 flex gap-2"
         >
@@ -174,10 +214,21 @@ export function TutorPanel({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 flex items-center gap-2 text-sm text-ink"
+              className="mt-3 flex items-center gap-2 text-sm text-bloom"
             >
               <Waveform bars={4} />
               Looking at the frame at {formatTime(time)}…
+            </motion.p>
+          )}
+          {failure && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              role="alert"
+              className="mt-3 text-sm text-live"
+            >
+              {failure}
             </motion.p>
           )}
         </AnimatePresence>
@@ -196,7 +247,7 @@ export function TutorPanel({
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                  className="rounded-card border border-line bg-surface/70 p-4"
+                  className="rounded-card border border-line bg-surface-raised p-4"
                 >
                   <p className="text-sm font-medium">
                     <span className="text-ink-faint">You asked: </span>
@@ -221,6 +272,16 @@ export function TutorPanel({
                     )}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink-soft">{entry.answer}</p>
+
+                  {onSpeak && (
+                    <button
+                      onClick={() => onSpeak(entry.answer)}
+                      className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-bloom"
+                    >
+                      <SpeakerIcon className="h-3.5 w-3.5" />
+                      Read it again
+                    </button>
+                  )}
                 </motion.li>
               ))}
             </AnimatePresence>
