@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useImperativeHandle, useRef, useState, type RefObject } from 'react';
 import { ChatIcon, SparkIcon, CheckIcon, EyeIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
 import { formatTime, cn } from '@/lib/utils';
@@ -50,19 +50,28 @@ function answerFor(preset: string, nearest: Description | null) {
   };
 }
 
+/** Lets the keyboard shortcuts drive the panel: A focuses it, 1–8 ask. */
+export interface TutorHandle {
+  focus: () => void;
+  askPreset: (index: number) => void;
+}
+
 export function TutorPanel({
   time,
   nearest,
   asked,
   onAsk,
+  handleRef,
 }: {
   time: number;
   nearest: Description | null;
   asked: LearnerQuestion[];
   onAsk: (question: LearnerQuestion) => void;
+  handleRef?: RefObject<TutorHandle | null>;
 }) {
   const [draft, setDraft] = useState('');
   const [thinking, setThinking] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function ask(question: string) {
     if (!question.trim() || thinking) return;
@@ -85,6 +94,14 @@ export function TutorPanel({
       setDraft('');
     }, 700);
   }
+
+  useImperativeHandle(handleRef, () => ({
+    focus: () => inputRef.current?.focus(),
+    askPreset: (index: number) => {
+      const preset = PRESETS[index];
+      if (preset) ask(preset.label);
+    },
+  }));
 
   return (
     <section className="glass lift rounded-panel" aria-label="Ask about the screen">
@@ -132,6 +149,7 @@ export function TutorPanel({
           </label>
           <input
             id="ask"
+            ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             maxLength={300}
