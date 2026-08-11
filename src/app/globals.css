@@ -21,6 +21,9 @@
   --color-ink-faint: var(--ink-faint);
   --color-ink-ghost: var(--ink-ghost);
   --color-live: var(--live);
+  --color-bloom: var(--bloom);
+  --color-bloom-soft: var(--bloom-soft);
+  --color-bloom-dim: var(--bloom-dim);
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
@@ -48,6 +51,12 @@
 
   --live: #e8523a;
 
+  /* The aster itself. The one colour in the system — used for the mark, for
+     "Aster is speaking", and for nothing else, so it always means the same thing. */
+  --bloom: #f5cf16;
+  --bloom-soft: #ffe45c;
+  --bloom-dim: #6d5c07;
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-sans);
 
@@ -68,6 +77,9 @@
   --ink-faint: #e0e0e0;
   --ink-ghost: #9a9a9a;
   --live: #ff6b52;
+  --bloom: #ffe14d;
+  --bloom-soft: #fff3a8;
+  --bloom-dim: #ffe14d;
 }
 
 :root[data-contrast='high'] .panel,

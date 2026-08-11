@@ -1,4 +1,5 @@
 import type { SVGProps } from 'react';
+import { cn } from '@/lib/utils';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -129,9 +130,14 @@ export function TerminalIcon(props: IconProps) {
  * The aster flower: sixteen tapering petals around a small dotted disc. Drawn
  * as pure geometry so it stays crisp from 16px in the nav to 96px in the hero.
  */
-export function AsterMark({ petals = 16, ...props }: IconProps & { petals?: number }) {
+export function AsterMark({
+  petals = 16,
+  className,
+  ...props
+}: IconProps & { petals?: number }) {
   return (
-    <svg viewBox="0 0 64 64" fill="none" {...props}>
+    // Defaults to the bloom yellow; pass a text-* class to override.
+    <svg viewBox="0 0 64 64" fill="none" className={cn('text-bloom', className)} {...props}>
       {Array.from({ length: petals }).map((_, i) => (
         <path
           key={i}
@@ -141,7 +147,9 @@ export function AsterMark({ petals = 16, ...props }: IconProps & { petals?: numb
           transform={`rotate(${(360 / petals) * i} 32 32)`}
         />
       ))}
-      <circle cx="32" cy="32" r="5.2" fill="currentColor" />
+      {/* The disc florets, lighter than the petals as on the real flower. */}
+      <circle cx="32" cy="32" r="5.4" fill="currentColor" />
+      <circle cx="32" cy="32" r="4" className="fill-bloom-soft" />
     </svg>
   );
 }

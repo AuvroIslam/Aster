@@ -15,7 +15,7 @@ export function StudySurface() {
       <header className="panel sticky top-0 z-30 border-b border-line">
         <div className="mx-auto flex max-w-[1500px] items-center gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AsterMark className="h-6 w-6 text-ink" />
+            <AsterMark className="h-6 w-6" />
             <span className="tracking-tight">Aster</span>
           </Link>
           <span className="ml-2 hidden text-sm text-ink-faint sm:block">Notes and PDFs</span>
