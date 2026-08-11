@@ -59,16 +59,17 @@ export function AuroraField({ className }: { className?: string }) {
 
   return (
     <div ref={ref} className={className} aria-hidden>
+      {/* Monochrome bloom: the palette has no hue, so depth comes from very
+          low-opacity white at different blur radii. */}
       <motion.div
         style={reduced ? undefined : { y: y1 }}
-        className="animate-drift absolute -left-24 -top-24 h-[32rem] w-[32rem] rounded-full bg-rust/20 blur-[110px]"
+        className="animate-drift absolute -left-24 -top-24 h-[32rem] w-[32rem] rounded-full bg-white/[0.05] blur-[110px]"
       />
       <motion.div
         style={reduced ? undefined : { y: y2 }}
-        className="animate-drift absolute -right-32 top-16 h-[36rem] w-[36rem] rounded-full bg-moss/25 blur-[120px]"
-        // Offset so the two blobs never breathe in sync.
+        className="animate-drift absolute -right-32 top-16 h-[36rem] w-[36rem] rounded-full bg-white/[0.035] blur-[120px]"
       />
-      <div className="animate-pulse-soft absolute left-1/3 top-1/2 h-[24rem] w-[24rem] rounded-full bg-amber/15 blur-[100px]" />
+      <div className="animate-pulse-soft absolute left-1/3 top-1/2 h-[24rem] w-[24rem] rounded-full bg-white/[0.03] blur-[100px]" />
     </div>
   );
 }

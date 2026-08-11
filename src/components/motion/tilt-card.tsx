@@ -27,7 +27,7 @@ export function TiltCard({
   const rotateX = useSpring(useMotionValue(0), { stiffness: 260, damping: 24 });
   const rotateY = useSpring(useMotionValue(0), { stiffness: 260, damping: 24 });
 
-  const glare = useMotionTemplate`radial-gradient(340px circle at ${px}% ${py}%, rgb(192 82 42 / 0.16), transparent 70%)`;
+  const glare = useMotionTemplate`radial-gradient(340px circle at ${px}% ${py}%, rgb(255 255 255 / 0.07), transparent 70%)`;
 
   function handleMove(event: PointerEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect();

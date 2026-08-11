@@ -125,24 +125,23 @@ export function TerminalIcon(props: IconProps) {
   );
 }
 
-export function AsterMark(props: IconProps) {
+/**
+ * The aster flower: sixteen tapering petals around a small dotted disc. Drawn
+ * as pure geometry so it stays crisp from 16px in the nav to 96px in the hero.
+ */
+export function AsterMark({ petals = 16, ...props }: IconProps & { petals?: number }) {
   return (
-    <svg viewBox="0 0 32 32" fill="none" {...props}>
-      {/* An asterisk of eight petals — the flower the product is named for,
-          and the * that stands for "everything". */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <ellipse
+    <svg viewBox="0 0 64 64" fill="none" {...props}>
+      {Array.from({ length: petals }).map((_, i) => (
+        <path
           key={i}
-          cx="16"
-          cy="8.2"
-          rx="2.7"
-          ry="5.6"
+          // A leaf shape from the centre outward, mirrored about its own axis.
+          d="M32 32 C29.4 24 29.6 15 32 4 C34.4 15 34.6 24 32 32 Z"
           fill="currentColor"
-          opacity={0.55 + (i % 2) * 0.45}
-          transform={`rotate(${i * 45} 16 16)`}
+          transform={`rotate(${(360 / petals) * i} 32 32)`}
         />
       ))}
-      <circle cx="16" cy="16" r="3.1" fill="var(--ground)" />
+      <circle cx="32" cy="32" r="5.2" fill="currentColor" />
     </svg>
   );
 }

@@ -83,7 +83,7 @@ export function RotatingWord({
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.span
           key={reduced ? 'static' : word}
-          className="absolute inset-0 text-rust"
+          className="absolute inset-0 text-ink"
           initial={reduced ? false : { opacity: 0, y: '0.5em', filter: 'blur(8px)' }}
           animate={{ opacity: 1, y: '0em', filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: '-0.5em', filter: 'blur(8px)' }}
