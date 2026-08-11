@@ -63,21 +63,69 @@ Accessibility is the product, not a later pass.
 
 ## Running it
 
+### 1. Prerequisites
+
+| Requirement | Check | Install |
+|---|---|---|
+| Node.js 20+ | `node --version` | <https://nodejs.org> |
+| yt-dlp | `yt-dlp --version` | `pip install yt-dlp` |
+| ffmpeg + ffprobe | `ffmpeg -version` | `winget install Gyan.FFmpeg` · `brew install ffmpeg` |
+| Gemma API key | — | <https://aistudio.google.com/apikey> (free) |
+
+### 2. Configure
+
 ```bash
-npm install
-npm run dev          # http://localhost:3000
+cp .env.example .env                 # add GEMMA_API_KEY
+cp .env.local.example .env.local     # points the web app at the API
 ```
 
-Requires Node 20+.
+### 3. Verify, then run
+
+```bash
+npm install
+npm run doctor      # checks binaries, key, a real Gemma vision call, YouTube access
+npm run dev         # API on :5174, web app on :3000
+```
+
+**Do not skip the doctor.** It checks every assumption the pipeline rests on and tells you
+exactly which one is missing.
+
+## Layout
+
+```
+server/                 Express API — the whole model pipeline
+  src/services/
+    gemma.js            the only model client
+    youtube.js          id parsing, metadata, download, subtitles
+    transcript.js       caption parsing, language, context windows
+    gaps.js             speech intervals, natural pauses, candidate moments
+    frames.js           ffmpeg frame extraction
+    comprehension.js    understand-the-whole-video pass
+    timeline.js         decide-then-describe orchestration + confidence rules
+    pdf.js              PDF text, table, formula and figure extraction
+  src/routes/           meta, video, describe, search, doc
+src/                    Next.js app
+  lib/practice.ts       the gap-driven teaching method
+  components/learn/     player, speech, scheduler, tutor, practice, search
+  components/study/     upload, reader, document Q&A, quiz
+  components/motion/    parallax, reveal, blur-in text, tilt, magnetic
+```
 
 ## Stack
 
-Next.js (App Router) · TypeScript · Tailwind v4 · Motion. The motion primitives in
-[`src/components/motion/`](src/components/motion/) — parallax, scroll reveal, blur-in text,
-pointer tilt, magnetic hover — are local components with no runtime UI dependency.
+Next.js (App Router) · TypeScript · Tailwind v4 · Motion · Express. No AI SDKs — Gemma and
+Whisper are called over plain HTTPS.
 
 ## Status
 
-The interface is built against fixture data
-([`src/lib/fixtures.ts`](src/lib/fixtures.ts)) that matches the shape the model pipeline will
-return, so wiring the real pipeline in changes no components.
+| Area | State |
+|---|---|
+| Speech synthesis, voice selection, rate/volume | Real |
+| YouTube player, transport, scheduling | Real |
+| Description pipeline, frame Q&A, video search | Real — needs `GEMMA_API_KEY` |
+| PDF text, table, formula, figure extraction | Real |
+| Figure *description* and document quizzes | Needs the key |
+| Gap-driven practice logic | Real, runs on whatever data it is given |
+
+Both surfaces fall back to a sample lesson and sample chapter when no server is reachable, so
+the interface is explorable without a key.
