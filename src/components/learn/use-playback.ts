@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Description } from '@/lib/types';
+import type { Description, NarrationMode } from '@/lib/types';
 
 const TICK_MS = 100;
 
@@ -21,6 +21,7 @@ export function usePlayback(descriptions: Description[], duration: number) {
   const [heard, setHeard] = useState<Description[]>([]);
   const [descriptionsOn, setDescriptionsOn] = useState(true);
   const [rate, setRate] = useState(1.25);
+  const [narration, setNarration] = useState<NarrationMode>('adaptive');
 
   /** True while a full explanation is holding playback. */
   const [holding, setHolding] = useState(false);
@@ -40,7 +41,9 @@ export function usePlayback(descriptions: Description[], duration: number) {
 
       setSpeaking(description);
       setHeard((prev) => (prev.some((d) => d.id === description.id) ? prev : [...prev, description]));
-      if (description.mode === 'explain') setHolding(true);
+      // Full-explanation mode holds playback for every moment, not just the
+      // long ones — the learner is relying on Aster for the whole lesson.
+      if (description.mode === 'explain' || narration === 'full') setHolding(true);
 
       // Roughly how long the utterance takes at the current speech rate.
       const words = description.text.split(/\s+/).length;
@@ -52,7 +55,7 @@ export function usePlayback(descriptions: Description[], duration: number) {
         speechTimer.current = null;
       }, seconds * 1000);
     },
-    [rate]
+    [rate, narration]
   );
 
   // The clock. Held while a full explanation is being delivered.
@@ -118,7 +121,9 @@ export function usePlayback(descriptions: Description[], duration: number) {
     heard,
     descriptionsOn,
     rate,
+    narration,
     setRate,
+    setNarration,
     setDescriptionsOn,
     toggle,
     seek,

@@ -1,5 +1,11 @@
 export type DescriptionMode = 'brief' | 'explain';
 
+/**
+ * `adaptive` lets the creator lead and speaks only into the pauses.
+ * `full` explains the whole lesson for someone who cannot see any of it.
+ */
+export type NarrationMode = 'adaptive' | 'full';
+
 export type VisualKind = 'code' | 'terminal' | 'diagram' | 'graph' | 'formula' | 'slide';
 
 /**

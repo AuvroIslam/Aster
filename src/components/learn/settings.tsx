@@ -1,20 +1,41 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { SpeakerIcon } from '@/components/icons';
+import { SpeakerIcon, EyeIcon, SparkIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
+import { cn } from '@/lib/utils';
+import type { NarrationMode } from '@/lib/types';
+
+const LANGUAGES = [
+  { code: 'auto', label: 'Match the video' },
+  { code: 'en', label: 'English' },
+  { code: 'bn', label: 'বাংলা — Bangla' },
+  { code: 'hi', label: 'हिन्दी — Hindi' },
+];
 
 export function SettingsPanel({
   rate,
   onRate,
   descriptionsOn,
   onDescriptionsOn,
+  narration,
+  onNarration,
+  language,
+  onLanguage,
+  highContrast,
+  onHighContrast,
   speaking,
 }: {
   rate: number;
   onRate: (value: number) => void;
   descriptionsOn: boolean;
   onDescriptionsOn: (value: boolean) => void;
+  narration: NarrationMode;
+  onNarration: (value: NarrationMode) => void;
+  language: string;
+  onLanguage: (value: string) => void;
+  highContrast: boolean;
+  onHighContrast: (value: boolean) => void;
   speaking: boolean;
 }) {
   return (
@@ -27,6 +48,27 @@ export function SettingsPanel({
       </header>
 
       <div className="space-y-6 p-5">
+        {/* The central choice: let the creator lead, or have Aster explain it all. */}
+        <fieldset>
+          <legend className="text-sm font-medium">How much should I say?</legend>
+          <div className="mt-3 space-y-2">
+            <NarrationOption
+              value="adaptive"
+              current={narration}
+              onSelect={onNarration}
+              title="Adaptive"
+              body="The creator narrates. I speak only into the pauses, and only when the screen carries something they never mention."
+            />
+            <NarrationOption
+              value="full"
+              current={narration}
+              onSelect={onNarration}
+              title="Full explanation"
+              body="I explain the whole lesson for a learner who cannot see it — not a transcript read aloud."
+            />
+          </div>
+        </fieldset>
+
         <div>
           <div className="flex items-baseline justify-between">
             <label htmlFor="rate" className="text-sm font-medium">
@@ -58,11 +100,46 @@ export function SettingsPanel({
           </div>
         </div>
 
+        <div>
+          <label htmlFor="lang" className="text-sm font-medium">
+            Explain in
+          </label>
+          <select
+            id="lang"
+            value={language}
+            onChange={(e) => onLanguage(e.target.value)}
+            className="mt-2 w-full rounded-card border border-line bg-surface px-3 py-2.5 text-sm outline-none transition-colors focus:border-rust"
+          >
+            {LANGUAGES.map((entry) => (
+              <option key={entry.code} value={entry.code}>
+                {entry.label}
+              </option>
+            ))}
+          </select>
+          {language === 'bn' && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-2 text-xs leading-relaxed text-amber"
+            >
+              Bangla speech needs a Bangla voice. Microsoft Edge ships one; most other browsers
+              need one installed first.
+            </motion.p>
+          )}
+        </div>
+
         <Toggle
           id="descriptions"
           label="Speak audio descriptions automatically"
           checked={descriptionsOn}
           onChange={onDescriptionsOn}
+        />
+
+        <Toggle
+          id="contrast"
+          label="High contrast mode"
+          checked={highContrast}
+          onChange={onHighContrast}
         />
 
         <div className="rounded-card border border-line bg-surface/60 p-4">
@@ -75,11 +152,66 @@ export function SettingsPanel({
           <p className="mt-1.5 text-xs leading-relaxed text-ink-faint">
             Press <kbd className="rounded bg-ground-deep px-1 py-0.5 font-mono">S</kbd> to skip a
             description, <kbd className="rounded bg-ground-deep px-1 py-0.5 font-mono">R</kbd> to
-            replay the last one.
+            replay the last one, <kbd className="rounded bg-ground-deep px-1 py-0.5 font-mono">?</kbd>{' '}
+            for every shortcut.
           </p>
+        </div>
+
+        {/* Provenance: one model generates everything, and it is named. */}
+        <div className="flex items-start gap-3 rounded-card border border-moss/25 bg-moss-soft/50 p-4">
+          <span className="mt-0.5 text-moss">
+            <SparkIcon className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-medium text-moss">Running on gemma-4-31b-it</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+              Every description, answer and question comes from Gemma — runnable locally, with no
+              per-request API cost.
+            </p>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function NarrationOption({
+  value,
+  current,
+  onSelect,
+  title,
+  body,
+}: {
+  value: NarrationMode;
+  current: NarrationMode;
+  onSelect: (value: NarrationMode) => void;
+  title: string;
+  body: string;
+}) {
+  const active = current === value;
+
+  return (
+    <button
+      onClick={() => onSelect(value)}
+      aria-pressed={active}
+      className={cn(
+        'relative w-full overflow-hidden rounded-card border p-3 text-left transition-colors duration-300',
+        active ? 'border-rust/40 bg-rust-soft/50' : 'border-line bg-surface/50 hover:border-rust/25'
+      )}
+    >
+      {active && (
+        <motion.span
+          layoutId="narration-active"
+          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+          className="absolute inset-y-0 left-0 w-1 bg-rust"
+        />
+      )}
+      <span className="flex items-center gap-2 text-sm font-medium">
+        <EyeIcon className={cn('h-4 w-4', active ? 'text-rust' : 'text-ink-faint')} />
+        {title}
+      </span>
+      <span className="mt-1 block text-xs leading-relaxed text-ink-soft">{body}</span>
+    </button>
   );
 }
 
@@ -105,9 +237,10 @@ function Toggle({
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-300 ${
+        className={cn(
+          'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-300',
           checked ? 'bg-rust' : 'bg-line'
-        }`}
+        )}
       >
         <motion.span
           layout
