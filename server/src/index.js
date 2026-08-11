@@ -1,4 +1,4 @@
-/** VisionBridge server entry point. */
+/** Aster server entry point. */
 import { config, validateConfig } from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
@@ -9,13 +9,13 @@ import { resolveModel } from './services/gemma.js';
 /** Refuses to start, without tearing the process down mid-flight: setting `exitCode` lets Node. */
 function refuseToStart(reason) {
   logger.error(reason);
-  logger.error('VisionBridge did not start. Run `npm run doctor` to diagnose.');
+  logger.error('Aster did not start. Run `npm run doctor` to diagnose.');
   process.exitCode = 1;
   return false;
 }
 
 async function main() {
-  logger.info('Starting VisionBridge server');
+  logger.info('Starting Aster server');
 
   const problems = validateConfig();
   if (problems.length) {
@@ -49,7 +49,7 @@ async function main() {
 
   const app = createApp();
   const server = app.listen(config.port, () => {
-    logger.info(`VisionBridge API listening on http://localhost:${config.port}`);
+    logger.info(`Aster API listening on http://localhost:${config.port}`);
     logger.info(`Model proof: http://localhost:${config.port}/api/config`);
   });
 

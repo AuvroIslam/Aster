@@ -121,7 +121,7 @@ export async function getTranscript(videoId) {
   });
   if (!subtitle) {
     throw new AppError(
-      'This video has no captions VisionBridge can read, so it cannot tell when the ' +
+      'This video has no captions Aster can read, so it cannot tell when the ' +
         'instructor is speaking. Please try a video that has captions (subtitles).',
       422,
       'no_transcript',

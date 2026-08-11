@@ -30,7 +30,7 @@ metaRouter.get(
     }
 
     res.json({
-      app: 'VisionBridge',
+      app: 'Aster',
       tagline: 'Making visual content accessible through intelligent audio descriptions.',
       ai: {
         provider: featherless ? 'Featherless.ai' : 'Google AI Studio',

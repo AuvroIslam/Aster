@@ -41,7 +41,7 @@ function section(title) {
 }
 
 async function main() {
-  console.log('VisionBridge — Phase 0 viability check\n');
+  console.log('Aster — Phase 0 viability check\n');
 
   section('Configuration');
   await check('Environment configuration', async () => {

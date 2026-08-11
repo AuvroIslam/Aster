@@ -88,7 +88,7 @@ export function buildDecisionPrompt({
     ? `\nRULES FOR THIS KIND OF VIDEO (${domain}):\n${bullets(domainRules)}\n`
     : '';
 
-  return `You are VisionBridge, an audio-description assistant for a blind learner listening to an educational video${
+  return `You are Aster, an audio-description assistant for a blind learner listening to an educational video${
     videoTitle ? ` titled "${videoTitle}"` : ''
   }. The learner hears every word of the narration but sees nothing at all. You are their only access to the screen.
 ${plan}
@@ -171,7 +171,7 @@ export function buildQuestionPrompt({
     ? `\nHOW TO EXPLAIN THIS KIND OF CONTENT (${domain}):\n${bullets(domainRules)}\n`
     : '';
 
-  return `You are VisionBridge, answering a blind learner who has paused an educational video${
+  return `You are Aster, answering a blind learner who has paused an educational video${
     videoTitle ? ` titled "${videoTitle}"` : ''
   } at ${time.toFixed(1)} seconds to ask you a question. They cannot see anything; your answer is their only access to the screen.
 ${plan}

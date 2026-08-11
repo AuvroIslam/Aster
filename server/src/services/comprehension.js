@@ -26,7 +26,7 @@ function buildPrompt({ title, channel, durationMinutes, transcript, narrationLan
     narrationLanguage && narrationLanguage.toLowerCase() !== 'english'
       ? `\nThe transcript is in ${narrationLanguage}. Understand it in ${narrationLanguage}, but write the JSON field values in English — they are internal planning notes, not shown to the learner.\n`
       : '';
-  return `You are the planning stage of VisionBridge, an audio-description assistant for blind and low-vision learners. You are reading an educational video's title and full transcript BEFORE any frames are looked at, to build a compact understanding that will guide the rest of the system.
+  return `You are the planning stage of Aster, an audio-description assistant for blind and low-vision learners. You are reading an educational video's title and full transcript BEFORE any frames are looked at, to build a compact understanding that will guide the rest of the system.
 
 You cannot see the video yet. Reason only from the words below.
 ${languageNote}

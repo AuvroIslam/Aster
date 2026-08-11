@@ -1,4 +1,4 @@
-/** Language helpers for VisionBridge's multilingual pipeline. */
+/** Language helpers for Aster's multilingual pipeline. */
 
 /** Bare language subtag: "en-US" -> "en", "bn-orig" -> "bn", "" -> "". */
 export function baseLang(code) {

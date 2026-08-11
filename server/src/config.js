@@ -1,4 +1,4 @@
-/** Central configuration for VisionBridge. */
+/** Central configuration for Aster. */
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
