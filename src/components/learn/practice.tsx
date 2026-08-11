@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { TargetIcon, CheckIcon, ArrowIcon, SpeakerIcon } from '@/components/icons';
-import { buildPracticeSet, explainReason } from '@/lib/practice';
+import { buildPracticeSet, explainReason, type ConceptNote } from '@/lib/practice';
 import { conceptNotes } from '@/lib/fixtures';
 import { formatTime, cn } from '@/lib/utils';
 import type { Description, LearnerQuestion, PracticeVerdict } from '@/lib/types';
@@ -34,14 +34,21 @@ export function PracticeSheet({
   heard,
   asked,
   onSeek,
+  notes = conceptNotes,
+  /** Videos cite a timestamp; documents cite a page. */
+  locate = (value: number) => `replay ${formatTime(value)}`,
+  emptyHint = 'Play the lesson. Every visual I have to describe, and every question you stop to ask, becomes something worth checking afterwards.',
 }: {
   heard: Description[];
   asked: LearnerQuestion[];
   onSeek: (seconds: number) => void;
+  notes?: Record<string, ConceptNote>;
+  locate?: (value: number) => string;
+  emptyHint?: string;
 }) {
   const items = useMemo(
-    () => buildPracticeSet(heard, asked, conceptNotes, 5),
-    [heard, asked]
+    () => buildPracticeSet(heard, asked, notes, 5),
+    [heard, asked, notes]
   );
 
   const [index, setIndex] = useState(0);
@@ -59,10 +66,7 @@ export function PracticeSheet({
         <h2 className="mt-4 font-display text-lg font-semibold tracking-tight">
           Nothing to practise yet
         </h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-faint">
-          Play the lesson. Every visual I have to describe, and every question you stop to ask,
-          becomes something worth checking afterwards.
-        </p>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-faint">{emptyHint}</p>
       </section>
     );
   }
@@ -114,7 +118,7 @@ export function PracticeSheet({
             className="inline-flex items-center gap-1 text-ink-faint underline-offset-2 transition-colors hover:text-rust hover:underline"
           >
             <SpeakerIcon className="h-3.5 w-3.5" />
-            replay {formatTime(item.sourceTime)}
+            {locate(item.sourceTime)}
           </button>
         </motion.div>
 

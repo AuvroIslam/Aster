@@ -1,5 +1,5 @@
 import type { ConceptNote } from './practice';
-import type { Description, LearnerQuestion, Lesson } from './types';
+import type { Description, DocBlock, LearnerQuestion, Lesson, StudyDoc } from './types';
 
 /**
  * A realistic processed lesson. The shape here is the contract the Gemma
@@ -148,6 +148,91 @@ export const conceptNotes: Record<string, ConceptNote> = {
     expects: ['left child smaller', 'right child larger'],
     reexplain:
       'One rule holds everywhere in the tree: smaller values live to the left of a node, larger ones to the right. That rule is what makes searching possible.',
+  },
+};
+
+/**
+ * An uploaded chapter. Note which blocks are marked `described`: the figure,
+ * the table, the formula and the chart. Those are what a sighted reader absorbs
+ * at a glance and a blind reader receives only through Aster.
+ */
+const docBlocks: DocBlock[] = [
+  {
+    id: 'b1',
+    page: 1,
+    kind: 'heading',
+    content: 'Chapter 7 — Self-Balancing Search Trees',
+    described: false,
+  },
+  {
+    id: 'b2',
+    page: 1,
+    kind: 'text',
+    content:
+      'A binary search tree gives fast lookup only while it stays shallow. Insert values in sorted order and the structure degenerates, losing every advantage it had over a list.',
+    described: false,
+  },
+  {
+    id: 'b3',
+    page: 1,
+    kind: 'figure',
+    concept: 'the right-skewed tree',
+    described: true,
+    content:
+      'Figure 7.1 places two trees side by side. On the left, five nodes descend diagonally to the right in a single unbroken chain, captioned "degenerate". On the right, the same five values form a tree three levels deep with two children under the root, captioned "balanced".',
+  },
+  {
+    id: 'b4',
+    page: 2,
+    kind: 'formula',
+    concept: 'the balance factor',
+    described: true,
+    content:
+      'Equation 7.1 reads: BF of node n equals height of the left subtree of n minus height of the right subtree of n. The text beneath states that a tree is an AVL tree when every node satisfies the absolute value of BF being at most one.',
+  },
+  {
+    id: 'b5',
+    page: 2,
+    kind: 'table',
+    concept: 'rotation cases',
+    described: true,
+    content:
+      'Table 7.1 has four rows and three columns — Case, Condition, Fix. Left-Left: inserted into the left child of the left subtree, fixed by one right rotation. Right-Right: mirror of it, one left rotation. Left-Right: left child then right, fixed by a left rotation followed by a right. Right-Left: the mirror again, right then left.',
+  },
+  {
+    id: 'b6',
+    page: 3,
+    kind: 'chart',
+    concept: 'lookup cost against tree height',
+    described: true,
+    content:
+      'Figure 7.4 plots comparisons against node count for one thousand to one million nodes. The unbalanced series climbs as a straight diagonal off the top of the chart. The AVL series stays almost flat, rising from about ten comparisons to roughly twenty across the whole range.',
+  },
+  {
+    id: 'b7',
+    page: 3,
+    kind: 'text',
+    content:
+      'Rotations are local: only the pointers around the unbalanced node change, so rebalancing costs constant time regardless of how large the tree has grown.',
+    described: false,
+  },
+];
+
+export const studyDoc: StudyDoc = {
+  id: 'doc-ch7',
+  title: 'Data Structures — Chapter 7, Self-Balancing Search Trees.pdf',
+  pages: 3,
+  words: 2140,
+  blocks: docBlocks,
+};
+
+/** Notes for the concepts that only appear in the document. */
+export const docConceptNotes: Record<string, ConceptNote> = {
+  ...conceptNotes,
+  'rotation cases': {
+    expects: ['four cases', 'left-left needs one right rotation', 'left-right needs two rotations'],
+    reexplain:
+      'Two of the four cases are straight — the imbalance runs in one direction, so one rotation undoes it. The other two zig-zag, so you straighten them first, then rotate. Four cases, but really two ideas.',
   },
 };
 

@@ -63,3 +63,31 @@ export interface PracticeItem {
 }
 
 export type PracticeVerdict = 'unanswered' | 'correct' | 'partial' | 'missed';
+
+/* --- Documents ----------------------------------------------------------- */
+
+export type BlockKind = 'heading' | 'text' | 'figure' | 'table' | 'formula' | 'chart';
+
+/**
+ * One block of an uploaded document. `described` marks the blocks a sighted
+ * reader takes in visually — figures, tables, charts, formulas — which Aster
+ * has to render into words. Exactly the same signal as a video description,
+ * so the same practice logic consumes it.
+ */
+export interface DocBlock {
+  id: string;
+  page: number;
+  kind: BlockKind;
+  /** The literal text, or Aster's rendering of a visual block. */
+  content: string;
+  concept?: string;
+  described: boolean;
+}
+
+export interface StudyDoc {
+  id: string;
+  title: string;
+  pages: number;
+  words: number;
+  blocks: DocBlock[];
+}
