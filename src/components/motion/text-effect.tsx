@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -80,16 +80,18 @@ export function RotatingWord({
       <span className="invisible" aria-hidden>
         {words.reduce((a, b) => (a.length >= b.length ? a : b))}
       </span>
-      <motion.span
-        key={reduced ? 'static' : word}
-        className="absolute inset-0 text-rust"
-        initial={reduced ? false : { opacity: 0, y: '0.5em', filter: 'blur(8px)' }}
-        animate={{ opacity: 1, y: '0em', filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: '-0.5em', filter: 'blur(8px)' }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {word}
-      </motion.span>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={reduced ? 'static' : word}
+          className="absolute inset-0 text-rust"
+          initial={reduced ? false : { opacity: 0, y: '0.5em', filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: '0em', filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: '-0.5em', filter: 'blur(8px)' }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {word}
+        </motion.span>
+      </AnimatePresence>
     </span>
   );
 }

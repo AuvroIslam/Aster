@@ -1,7 +1,21 @@
+import { SiteNav } from '@/components/site-nav';
+import { Hero } from '@/components/landing/hero';
+import { Loop } from '@/components/landing/loop';
+import { Method } from '@/components/landing/method';
+import { Features, CallToAction, SiteFooter } from '@/components/landing/features';
+
 export default function Home() {
   return (
-    <main id="main" className="grid min-h-dvh place-items-center p-8">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">Aster</h1>
-    </main>
+    <>
+      <SiteNav />
+      <main id="main">
+        <Hero />
+        <Loop />
+        <Method />
+        <Features />
+        <CallToAction />
+      </main>
+      <SiteFooter />
+    </>
   );
 }
