@@ -56,3 +56,12 @@ coverage/
 
 # --- Deploy tooling --------------------------------------------------------
 .vercel
+
+# --- Pitch deck -------------------------------------------------------------
+# The exported slides stay on this machine. Only the three the README actually
+# shows are published; the rest are submission material, not repo content.
+comprules.md
+docs/Aster-Pitch-Deck/*
+!docs/Aster-Pitch-Deck/4.png
+!docs/Aster-Pitch-Deck/11.png
+!docs/Aster-Pitch-Deck/14.png

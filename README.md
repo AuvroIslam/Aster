@@ -9,15 +9,17 @@
 <p align="center">
   <a href="https://aster-coral.vercel.app"><strong>Try it live →</strong></a>
   &nbsp;·&nbsp;
-  <a href="#running-it">Run it locally</a>
+  <a href="https://youtu.be/ANY_swvypIY"><strong>Watch the demo →</strong></a>
   &nbsp;·&nbsp;
-  <a href="docs/Aster-Pitch-Deck">Pitch deck</a>
+  <a href="#running-it">Run it locally</a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/01-landing-hero.png" width="880" alt="Aster's landing page: a visual lesson on one side, the same lesson as audio on the other" />
+  <a href="https://youtu.be/ANY_swvypIY">
+    <img src="docs/screenshots/01-landing-hero.png" width="880" alt="Watch the Aster demo video" />
+  </a>
   <br />
-  <sub><em>A visual lesson on one side, the same lesson as audio on the other.</em></sub>
+  <sub><em>▶ Watch the demo — a visual lesson on one side, the same lesson as audio on the other.</em></sub>
 </p>
 
 <br />
@@ -374,8 +376,4 @@ the interface is explorable without a key.
 
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/14.png" width="820" alt="Thank you, from Team Aster" />
-</p>
-
-<p align="center">
-  <sub>The full deck lives in <a href="docs/Aster-Pitch-Deck">docs/Aster-Pitch-Deck</a>.</sub>
 </p>
