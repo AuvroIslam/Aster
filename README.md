@@ -61,6 +61,17 @@ descriptions that will never come — to claim it.
   <sub><em>The parabola, described — spoken into the pause, never over the teacher.</em></sub>
 </p>
 
+<br />
+
+And Meera is not an edge case. She is one of tens of millions, concentrated in exactly the places
+where free video is the only affordable teacher there is.
+
+<p align="center">
+  <img src="docs/Aster-Pitch-Deck/4.png" width="820" alt="2.2B+ people with vision impairment, 43M blind worldwide, 1B+ hours of video watched daily" />
+  <br />
+  <sub><em>The gap is widest exactly where learning happens.</em></sub>
+</p>
+
 ---
 
 ## Why the things that already exist don't solve it
@@ -70,7 +81,7 @@ descriptions that will never come — to claim it.
 | **Screen readers** | They read the *interface*, not the lesson. The play button is announced; the diagram is not. |
 | **Captions & transcripts** | They carry the words the teacher said — and the whole problem is what the teacher *didn't* say. "As you can see here" is captioned perfectly and means nothing. |
 | **Describe-everything AI** | It narrates every frame and talks straight over the instructor. Two voices at once is not a lesson; it is noise, and it is unusable. |
-| **Waiting for accessible content** | Someone else has to make it. For the ~1.1 billion hours of lectures already on YouTube, nobody will. |
+| **Waiting for accessible content** | Audio description is the real fix, but it is manual and expensive — so it exists for almost no educational video, and never for the lecture she needs tonight. |
 
 Laid out side by side, the pattern is that each tool solves a different problem well and none of
 them solves *hers*. A screen reader is built for an interface, a transcript for speech, a chatbot
@@ -163,14 +174,6 @@ grounded in *this* frame and *this* lesson, not in the model's general knowledge
 code" returns the code actually on screen rather than a plausible-looking invention. Pressing any
 of those keys stops the lesson first: she cannot glance back at what played underneath while she
 was busy asking.
-
-<p align="center">
-  <img src="docs/screenshots/06-ask-the-tutor.png" width="820" alt="Asking the tutor about the current frame, with eight one-key presets" />
-  <br />
-  <sub><em>Eight preset questions on one key each, or ask anything in your own words.</em></sub>
-</p>
-
-<br />
 
 ### Practice the gap, not the lesson
 
