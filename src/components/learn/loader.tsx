@@ -8,16 +8,26 @@ import type { LessonPhase, LessonProgress } from './use-lesson';
 import { api, type ReadyVideo } from '@/lib/api';
 import { cn, formatTime } from '@/lib/utils';
 
+/** A keyboard key in running text. */
+function Key({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="rounded bg-white/[0.08] px-1 py-0.5 font-mono text-[11px] text-ink">
+      {children}
+    </kbd>
+  );
+}
+
 /** The bar that turns a URL into a described lesson. */
 export function UrlBar({
   onLoad,
   busy,
-  onDemo,
+  onSearch,
   showDemo,
 }: {
   onLoad: (url: string) => void;
   busy: boolean;
-  onDemo: () => void;
+  /** Opens spoken search — the same thing the W key does. */
+  onSearch: () => void;
   showDemo: boolean;
 }) {
   const [draft, setDraft] = useState('');
@@ -53,10 +63,10 @@ export function UrlBar({
       {showDemo && (
         <button
           type="button"
-          onClick={onDemo}
+          onClick={onSearch}
           className="shrink-0 rounded-full border border-line px-4 py-2.5 text-sm text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
         >
-          Use the sample lesson
+          Press <Key>W</Key> to search by voice
         </button>
       )}
     </form>

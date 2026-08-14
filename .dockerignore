@@ -1,0 +1,31 @@
+# Keep secrets, build output and the frontend out of the API image.
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+out
+dist
+
+# The Next.js app deploys to Vercel, not here.
+src
+public
+next.config.ts
+postcss.config.mjs
+tsconfig.json
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Reference material and working files.
+Iris2026
+uiRef
+docs
+.git
+.github
+.claude
+CLAUDE.md
+*.log
+
+# The cache is copied deliberately in the Dockerfile, but not its scratch space.
+.cache/tmp

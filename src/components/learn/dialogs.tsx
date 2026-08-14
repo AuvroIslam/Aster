@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { SHORTCUTS } from './use-shortcuts';
 import { useVoiceSearch } from './use-voice-search';
+import { useSpeech } from './use-speech';
 import { SpeakerIcon, SparkIcon, PlayIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
 import { formatTime, cn } from '@/lib/utils';
@@ -113,12 +114,19 @@ export function SearchDialog({
   autoListen?: boolean;
 }) {
   const voice = useVoiceSearch();
+  const speech = useSpeech();
   const [draft, setDraft] = useState('');
+  /** Which result is being read out, and therefore what Enter will load. */
+  const [announced, setAnnounced] = useState(0);
+  const [reading, setReading] = useState(false);
 
   useEffect(() => {
     if (!open) {
       voice.reset();
       setDraft('');
+      setAnnounced(0);
+      setReading(false);
+      speech.cancel();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -156,6 +164,74 @@ export function SearchDialog({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, listening]);
+
+  /**
+   * Reads the results out, one at a time.
+   *
+   * A list on screen is no use to someone who cannot see it, so the results are
+   * announced in order and the one being spoken is the one Enter will load.
+   * That makes choosing a lesson possible with two keys and no sight: W to
+   * speak the search, Enter when you hear the one you want.
+   */
+  useEffect(() => {
+    const results = voice.results;
+    if (!open || results.length === 0) return;
+
+    let cancelled = false;
+    setReading(true);
+
+    // Typing a search leaves focus in the field, where Enter means "search
+    // again" and the result being read aloud cannot be chosen. Step out of it
+    // once there are results, so Enter belongs to the list.
+    if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+
+    (async () => {
+      await speech.speak(
+        `${results.length} result${results.length === 1 ? '' : 's'}. Press Enter on the one you want.`
+      );
+      for (let i = 0; i < results.length; i += 1) {
+        if (cancelled) return;
+        setAnnounced(i);
+        const r = results[i];
+        const spoken = `${i + 1}. ${r.title}.${r.channel ? ` By ${r.channel}.` : ''}${
+          r.duration ? ` ${Math.round(r.duration / 60)} minutes.` : ''
+        }`;
+        const result = await speech.speak(spoken);
+        // Cancelled means the learner pressed Enter, or closed the dialog.
+        if (cancelled || result.cancelled) return;
+      }
+      if (!cancelled) setReading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+      setReading(false);
+      speech.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, voice.results]);
+
+  /** Enter loads whichever result is currently being announced. */
+  useEffect(() => {
+    if (!open || voice.results.length === 0) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Enter') return;
+      // The typed-search field has its own submit behaviour.
+      if (event.target instanceof HTMLElement && event.target.tagName === 'INPUT') return;
+      const chosen = voice.results[announced];
+      if (!chosen) return;
+      event.preventDefault();
+      speech.cancel();
+      onPick(chosen.url);
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, voice.results, announced]);
+
+  useEffect(() => setAnnounced(0), [voice.results]);
 
   const recording = listening;
   const busy = voice.state === 'transcribing';
@@ -264,25 +340,43 @@ export function SearchDialog({
       </AnimatePresence>
 
       {voice.results.length > 0 && (
-        <ul className="mt-4 max-h-[40vh] space-y-1 overflow-y-auto" aria-label="Search results">
-          {voice.results.map((result) => (
-            <li key={result.videoId}>
-              <button
-                onClick={() => onPick(result.url)}
-                className="flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
-              >
-                <PlayIcon className="h-4 w-4 shrink-0 text-ink-faint" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm">{result.title}</span>
-                  <span className="block truncate text-xs text-ink-faint">
-                    {result.channel}
-                    {result.duration ? ` · ${formatTime(result.duration)}` : ''}
+        <>
+          <p className="mt-4 text-xs text-ink-faint" aria-live="polite">
+            {reading
+              ? `Reading result ${announced + 1} of ${voice.results.length} — press Enter to load it.`
+              : 'Press Enter to load the highlighted result.'}
+          </p>
+          <ul className="mt-2 max-h-[40vh] space-y-1 overflow-y-auto" aria-label="Search results">
+            {voice.results.map((result, i) => (
+              <li key={result.videoId}>
+                <button
+                  onClick={() => onPick(result.url)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors',
+                    i === announced
+                      ? 'bg-bloom/15 ring-1 ring-inset ring-bloom/40'
+                      : 'hover:bg-white/[0.05]'
+                  )}
+                >
+                  <PlayIcon
+                    className={cn(
+                      'h-4 w-4 shrink-0',
+                      i === announced ? 'text-bloom' : 'text-ink-faint'
+                    )}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm">{result.title}</span>
+                    <span className="block truncate text-xs text-ink-faint">
+                      {result.channel}
+                      {result.duration ? ` · ${formatTime(result.duration)}` : ''}
+                    </span>
                   </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                  {i === announced && reading && <Waveform bars={4} className="h-3 text-bloom" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </Overlay>
   );

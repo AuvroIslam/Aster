@@ -5,7 +5,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef } from 'react';
 import { TextEffect } from '@/components/motion/text-effect';
 import { Magnetic } from '@/components/motion/tilt-card';
-import { AsterMark, PlayIcon } from '@/components/icons';
+import { AsterMark } from '@/components/icons';
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -35,7 +35,7 @@ export function Hero() {
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto mb-12 w-fit"
         >
-          <AsterMark className="animate-spin-slow h-14 w-14" />
+          <AsterMark className="animate-spin-slow h-20 w-20" />
         </motion.div>
 
         <h1 className="headline text-balance text-[3.25rem] leading-[0.98] sm:text-7xl md:text-[5.5rem]">
@@ -116,13 +116,27 @@ function HeroStage() {
         <div className="grid items-stretch gap-3 sm:grid-cols-[1fr_auto_1fr]">
           {/* Visual lesson */}
           <div className="panel-raised relative flex min-h-[15rem] flex-col justify-between rounded-card p-5">
-            <div className="flex flex-1 items-center justify-center">
-              <motion.span
-                whileHover={{ scale: 1.08 }}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-line-strong text-ink-soft"
-              >
-                <PlayIcon className="h-4 w-4" />
-              </motion.span>
+            {/*
+              A bar chart, because that is the kind of thing this side of the
+              picture actually holds: a visual carrying information the
+              narration never says out loud. A play button said "video" and
+              nothing about why the video is a problem.
+            */}
+            <div className="flex flex-1 items-end justify-center gap-2 px-2 pb-2" aria-hidden>
+              {[38, 62, 46, 84, 70, 96].map((height, i) => (
+                <motion.span
+                  key={height}
+                  initial={reduced ? false : { height: 6 }}
+                  animate={{ height: `${height}%` }}
+                  transition={{
+                    duration: 0.7,
+                    delay: reduced ? 0 : 0.4 + i * 0.08,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="w-5 rounded-t bg-ink-ghost"
+                  style={{ height: `${height}%` }}
+                />
+              ))}
             </div>
             <span className="label-micro">Visual lesson</span>
           </div>

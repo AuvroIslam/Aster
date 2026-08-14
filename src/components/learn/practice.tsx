@@ -233,7 +233,14 @@ export function PracticeSheet({
     setIndex((i) => (i + 1) % items.length);
   }
 
-  if (loading && items.length === 0) {
+  /*
+   * On a real lesson the questions come from the model, so wait for them even
+   * when a locally built set exists. Showing the fallback first and swapping it
+   * out a few seconds later changes the question under the learner — and if
+   * they are listening rather than looking, they would hear one question and
+   * then be graded against another.
+   */
+  if (loading && (items.length === 0 || (videoId && !generated))) {
     return (
       <section className="panel rounded-panel p-6 text-center" aria-live="polite" aria-label="Practice">
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ground-deep text-bloom">

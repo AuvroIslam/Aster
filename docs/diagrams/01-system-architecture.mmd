@@ -1,0 +1,43 @@
+flowchart LR
+    learner(["Blind or<br/>low-vision learner"])
+
+    subgraph browser["BROWSER · Next.js"]
+        direction TB
+        surfaces["<b>/learn</b><br/>player · timeline<br/>tutor · practice<br/><br/><b>/study</b><br/>PDF pages · summary<br/>page-by-page · ask"]
+        voice["<b>Web Speech API</b><br/>reads aloud, and hears you<br/><i>no key needed</i>"]
+    end
+
+    api["<b>Express API</b><br/>port 5174<br/><br/>video · describe<br/>doc · practice · search"]
+
+    subgraph pipeline["SERVER PIPELINE"]
+        direction TB
+        ytdlp["<b>yt-dlp</b><br/>captions · metadata<br/>video download"]
+        ffmpeg["<b>ffmpeg</b><br/>frame extraction"]
+        pdfjs["<b>pdf.js</b><br/>text · tables<br/>formulas · figures"]
+    end
+
+    gemma{{"<b>GEMMA</b><br/>the only<br/>generative model"}}
+
+    subgraph keys["FALLBACK LADDER"]
+        direction TB
+        k1["1 · Google AI Studio<br/>primary key"]
+        k2["2 · Google AI Studio<br/>second account"]
+        k3["3 · Featherless<br/>same weights, other host"]
+    end
+
+    cache[("<b>.cache</b><br/>transcripts · frames<br/>timelines")]
+
+    learner <--> browser
+    browser <-->|"JSON over HTTP"| api
+    api --> pipeline
+    api <-->|"second visit<br/>is instant"| cache
+    pipeline --> gemma
+    gemma --> k1
+    k1 -.->|"rate limited"| k2
+    k2 -.->|"both spent"| k3
+
+    class surfaces,api,ytdlp,ffmpeg,pdfjs primary
+    class voice,gemma accent
+    class cache,k1,k2,k3 muted
+    class learner strong
+    class browser,pipeline,keys container

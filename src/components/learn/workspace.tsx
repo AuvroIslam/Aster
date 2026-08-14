@@ -170,7 +170,10 @@ export function Workspace() {
                 void loader.load(url);
               }}
               busy={busy}
-              onDemo={() => setUseSample(true)}
+              onSearch={() => {
+                setSearchByVoice(false);
+                setShowSearch(true);
+              }}
               showDemo={!lesson}
             />
           </div>

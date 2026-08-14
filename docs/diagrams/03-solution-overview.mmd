@@ -1,0 +1,36 @@
+flowchart LR
+    subgraph inputs["WHAT THE LEARNER BRINGS"]
+        direction TB
+        video["<b>A YouTube lesson</b><br/>any language with captions"]
+        pdf["<b>Notes, slides, a textbook</b><br/>PDF"]
+    end
+
+    aster((("<b>ASTER</b>")))
+
+    subgraph loop["THE LEARNING LOOP"]
+        direction TB
+        watch["<b>WATCH</b><br/>Aster speaks only where the screen<br/>carries what the narration leaves out"]
+        understand["<b>UNDERSTAND</b><br/>diagrams, code, tables and formulas<br/>rendered into words"]
+        ask["<b>ASK</b><br/>hold W and speak — answered against<br/>the frame or page you are on"]
+        practice["<b>PRACTICE</b><br/>real questions on the subject; answer<br/>out loud and hear what you missed"]
+    end
+
+    subgraph out["WHAT THE LEARNER LEAVES WITH"]
+        direction TB
+        equal["<b>The same lesson a<br/>sighted student received</b>"]
+        checked["<b>The gaps closed</b><br/>what reached you by ear<br/>is what gets checked"]
+    end
+
+    video --> aster
+    pdf --> aster
+    aster --> watch
+    watch --> understand --> ask --> practice
+    practice -.->|"missed it? asked again later,<br/>explained a different way"| watch
+    practice --> equal
+    practice --> checked
+
+    class video,pdf primary
+    class aster accent
+    class watch,understand,ask,practice primary
+    class equal,checked muted
+    class inputs,loop,out container

@@ -48,12 +48,122 @@ export const watchUrl = (videoId) => `https://www.youtube.com/watch?v=${videoId}
 /** `--remote-components ejs:github` lets yt-dlp fetch its JS challenge-solver script (cached after. */
 const BASE_YTDLP_ARGS = ['--remote-components', 'ejs:github'];
 
-/** Base arguments plus the egress proxy, when one is configured. */
-const baseArgs = () =>
-  config.bin.ytdlpProxy ? [...BASE_YTDLP_ARGS, '--proxy', config.bin.ytdlpProxy] : BASE_YTDLP_ARGS;
+/**
+ * Base arguments plus the egress proxy, when one is configured.
+ *
+ * `session` asks the proxy for a different exit IP. Residential providers key
+ * sticky sessions off a suffix on the username — Proxyma uses `_s_<name>` —
+ * and without varying it every retry can leave through the same address. That
+ * matters because YouTube's refusals are per-IP: retrying a blocked exit fails
+ * identically however many times you try, which is what made three attempts
+ * look as hopeless as one.
+ *
+ * Left alone for proxies that carry no credentials, since there is no username
+ * to attach a session to.
+ */
+const baseArgs = (session) => {
+  const proxy = config.bin.ytdlpProxy;
+  if (!proxy) return BASE_YTDLP_ARGS;
+  return [...BASE_YTDLP_ARGS, '--proxy', session ? withProxySession(proxy, session) : proxy];
+};
+
+/** Adds a sticky-session tag to a `scheme://user:pass@host:port` proxy URL. */
+export function withProxySession(proxyUrl, session) {
+  const match = String(proxyUrl).match(/^(\w+:\/\/)([^:@/]+)(:[^@]*@.+)$/);
+  if (!match) return proxyUrl;
+  const [, scheme, user, rest] = match;
+  // Replace an existing tag rather than stacking them up.
+  const base = user.replace(/_s_[A-Za-z0-9]+/g, '');
+  return `${scheme}${base}_s_${session}${rest}`;
+};
 
 /** YouTube's bot-check message, matched to trigger cookie rotation. */
 const BOT_CHECK = /sign in to confirm you.{0,5}re not a bot/i;
+
+/**
+ * Turns yt-dlp's stderr into something a learner can act on.
+ *
+ * These failures are almost always about YouTube's relationship with this
+ * machine — a session it distrusts, an IP it rate-limits — and not about
+ * anything the learner did. Left raw they surface as "yt-dlp.exe exited with
+ * code 1", which explains nothing and suggests no way forward. Each case below
+ * names the cause and the one thing that actually fixes it.
+ */
+export function explainYtdlpFailure(raw, { videoId } = {}) {
+  const text = String(raw || '');
+
+  // The session failures. All three mean the same thing to whoever is looking
+  // at the screen — YouTube will not release new video to this server right
+  // now — so all three end with the same way forward.
+  const SESSION_REMEDY =
+    'Either run Aster on your own computer, where YouTube trusts the connection, or wait for the ' +
+    'author to refresh the session. In the meantime every lesson below under “Ready to play” is ' +
+    'already described and plays instantly, and the Notes and PDFs surface is unaffected.';
+
+  if (BOT_CHECK.test(text)) {
+    return new AppError(
+      'YouTube asked this server to prove it is not a bot, which means its yt-dlp session has ' +
+        `expired. Nothing is wrong with the video or with what you did. ${SESSION_REMEDY}`,
+      503,
+      'youtube_bot_check',
+    );
+  }
+
+  if (/HTTP Error 429|Too Many Requests/i.test(text)) {
+    return new AppError(
+      'YouTube is rate-limiting this server after too many requests in a short time. ' +
+        `${SESSION_REMEDY}`,
+      503,
+      'youtube_rate_limited',
+    );
+  }
+
+  if (/HTTP Error 403|Forbidden/i.test(text)) {
+    return new AppError(
+      'YouTube refused to hand over this video’s media, which usually means the server’s yt-dlp ' +
+        `session has expired. Aster already retried automatically. ${SESSION_REMEDY}`,
+      503,
+      'youtube_forbidden',
+    );
+  }
+
+  if (/Private video|members-only|Join this channel/i.test(text)) {
+    return new AppError(
+      'That video is private or members-only, so its audio and frames cannot be read. Try a ' +
+        'publicly available lesson.',
+      422,
+      'video_private',
+    );
+  }
+
+  if (/Video unavailable|has been removed|no longer available/i.test(text)) {
+    return new AppError(
+      'That video is unavailable — it may have been removed, or blocked in this country.',
+      422,
+      'video_unavailable',
+    );
+  }
+
+  if (/age.?restricted|confirm your age/i.test(text)) {
+    return new AppError(
+      'That video is age-restricted, so YouTube will not release it without a signed-in session. ' +
+        'A cookies file (YTDLP_COOKIES_PATH) would allow it.',
+      422,
+      'video_age_restricted',
+    );
+  }
+
+  if (/is a live|live event will begin|premieres in/i.test(text)) {
+    return new AppError(
+      'That is a live stream or an upcoming premiere. Aster reads a whole lesson before it speaks, ' +
+        'so it needs a finished video.',
+      422,
+      'video_is_live',
+    );
+  }
+
+  return null;
+}
 
 /** Runs yt-dlp with automatic cookie rotation. */
 async function runYtdlp(bin, buildArgs, options) {
@@ -70,10 +180,12 @@ async function runYtdlp(bin, buildArgs, options) {
         markCookieFileDead(cookieFile);
         continue;
       }
-      throw err;
+      // Every yt-dlp caller goes through here, so this is the one place that
+      // has to translate a raw exit code into something worth reading.
+      throw explainYtdlpFailure(err.message) ?? err;
     }
   }
-  throw lastErr;
+  throw explainYtdlpFailure(lastErr?.message) ?? lastErr;
 }
 
 function requireYtDlp() {
@@ -197,7 +309,18 @@ export async function downloadVideo(videoId, onProgress) {
    * re-signed, and only a fresh yt-dlp invocation does that. So retry the
    * process itself, dropping to the muxed stream on the final attempt.
    */
-  const attempts = [adaptive, adaptive, muxed];
+  /*
+   * Six rungs, because the measured success rate through a residential proxy
+   * is about 75% per attempt — YouTube refuses roughly one exit IP in four,
+   * seemingly at random. Each attempt leaves through a different IP, so the
+   * odds compound: six independent tries put total failure near 1 in 5,000,
+   * where three would leave it at 1 in 60.
+   *
+   * A failed attempt costs about six seconds, so even the worst case stays
+   * inside the minute. Waiting is cheap; telling a learner the video cannot be
+   * loaded when a retry would have worked is not.
+   */
+  const attempts = [adaptive, adaptive, adaptive, adaptive, adaptive, muxed];
 
   onProgress?.({ percent: 0, message: 'Downloading video' });
 
@@ -215,7 +338,9 @@ export async function downloadVideo(videoId, onProgress) {
             '--no-part',
             '--retries',
             '3',
-            ...baseArgs(),
+            // A different exit IP each time round, so a refusal aimed at one
+            // address does not simply repeat.
+            ...baseArgs(`a${attempt}${Date.now().toString(36).slice(-4)}`),
             ...cookieArgs,
             '-o',
             output,
@@ -238,7 +363,7 @@ export async function downloadVideo(videoId, onProgress) {
       }
     }
   }
-  if (lastError) throw lastError;
+  if (lastError) throw explainYtdlpFailure(lastError.message, { videoId }) ?? lastError;
 
   const file = await findCachedVideo(videoId);
   if (!file) throw new AppError('Video download finished but no file was produced.', 502, 'download_failed');

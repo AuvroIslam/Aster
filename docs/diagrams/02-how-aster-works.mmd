@@ -1,0 +1,35 @@
+flowchart TB
+    url["A YouTube lesson"]
+
+    captions["<b>1 · Read the captions</b><br/>every word the instructor says,<br/>in the language they say it"]
+    gaps["<b>2 · Find the natural pauses</b><br/>silences long enough to speak into"]
+    whole["<b>3 · Understand the whole video</b><br/>topic, key concepts and the visuals to expect —<br/>before looking at a single frame"]
+    frames["<b>4 · Extract the candidate frames</b><br/>one per pause"]
+
+    decide{"<b>Can the learner follow this<br/>without seeing it?</b>"}
+
+    silent["<b>Stay silent</b><br/>the instructor already said it"]
+    describe["<b>Describe it</b><br/>into the pause, never over the instructor"]
+
+    conf{"<b>How sure am I?</b>"}
+    high["<b>0.85 and above</b><br/>speak normally"]
+    mid["<b>0.6 to 0.85</b><br/>speak only if the visual is critical"]
+    low["<b>below 0.6</b> · discard<br/><i>silence beats a wrong description</i>"]
+
+    speak(["Spoken aloud, in the learner's own language"])
+
+    url --> captions --> gaps --> whole --> frames --> decide
+    decide -->|"YES, they can"| silent
+    decide -->|"NO — the screen carries it alone"| describe
+    describe --> conf
+    conf --> high --> speak
+    conf --> mid --> speak
+    conf --> low
+    silent -.-> speak
+
+    class captions,gaps,whole,frames,describe primary
+    class decide,conf accent
+    class silent,low muted
+    class speak accent
+    class high,mid primary
+    class url strong

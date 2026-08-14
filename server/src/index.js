@@ -6,6 +6,7 @@ import { ensureCacheDirs } from './lib/cache.js';
 import { probeBinaries } from './lib/binaries.js';
 import { resolveModel } from './services/gemma.js';
 import { warmBundledDocuments } from './routes/doc.js';
+import { seedCacheIfEmpty } from './lib/seed.js';
 
 /** Refuses to start, without tearing the process down mid-flight: setting `exitCode` lets Node. */
 function refuseToStart(reason) {
@@ -26,6 +27,10 @@ async function main() {
 
   await ensureCacheDirs();
   logger.info(`Cache directory: ${config.cacheDir}`);
+
+  // Before anything else touches the cache: fill it from the image if the
+  // persistent mount is still empty, so the shipped lessons are ready at once.
+  await seedCacheIfEmpty();
 
   const binaries = await probeBinaries();
   for (const [name, probe] of Object.entries(binaries)) {

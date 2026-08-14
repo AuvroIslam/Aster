@@ -300,6 +300,11 @@ async function generateViaFeatherless(
   throw lastError || upstreamError('Featherless request failed');
 }
 
+/** True when Featherless has everything it needs to serve as a fallback. */
+function featherlessConfigured() {
+  return Boolean(config.featherless.apiKey && config.featherless.model);
+}
+
 /** Single generation call, routed to the configured provider. */
 export async function generate(options = {}) {
   const { model: modelOverride, allowFallback = true, ...genOptions } = options;
@@ -327,23 +332,60 @@ export async function generate(options = {}) {
   // resolution; otherwise use the pinned/auto-resolved model.
   const model = modelOverride || (await resolveModel()).model;
 
-  try {
-    return await generateViaGoogle(model, config.gemma.apiKey, genOptions);
-  } catch (primaryErr) {
-    // Interactive callers opt out: a slow primary should not trigger a second full call.
-    if (!allowFallback || !config.gemma.apiKeyFallback) throw primaryErr;
-    logger.warn(
-      `Primary Gemma key failed: ${primaryErr.message}. Falling back to the secondary Google key.`,
-    );
+  /*
+   * The fallback ladder: first Google key, then a second Google key on a
+   * different account, then Featherless serving the same Gemma weights.
+   *
+   * Each rung exists for a different failure. The second key covers the free
+   * tier's per-account rate limit, which is what actually runs out during a
+   * long video. Featherless covers the case where Google is unreachable or
+   * both accounts are spent — a different host entirely, so it survives an
+   * outage that takes out both keys at once.
+   *
+   * Interactive callers pass `allowFallback: false`: a learner waiting on an
+   * answer is better served by a quick failure than by three slow attempts.
+   */
+  const attempts = [
+    {
+      label: 'primary Google key',
+      provider: 'google',
+      run: () => generateViaGoogle(model, config.gemma.apiKey, genOptions),
+    },
+  ];
+
+  if (allowFallback && config.gemma.apiKeyFallback) {
+    attempts.push({
+      label: 'secondary Google key',
+      provider: 'google-fallback',
+      run: () => generateViaGoogle(model, config.gemma.apiKeyFallback, genOptions),
+    });
+  }
+
+  if (allowFallback && featherlessConfigured()) {
+    attempts.push({
+      label: `Featherless (${config.featherless.model})`,
+      provider: 'featherless-fallback',
+      run: () => generateViaFeatherless(config.featherless.model, config.featherless.apiKey, genOptions),
+    });
+  }
+
+  let firstError = null;
+  for (const [i, attempt] of attempts.entries()) {
     try {
-      const result = await generateViaGoogle(model, config.gemma.apiKeyFallback, genOptions);
-      logger.info('Served by the secondary Gemma API key (fallback).');
-      return { ...result, provider: 'google-fallback' };
-    } catch (fallbackErr) {
-      logger.warn(`Secondary Gemma key also failed: ${fallbackErr.message}`);
-      throw primaryErr; // surface the primary failure to the caller
+      const result = await attempt.run();
+      if (i > 0) logger.info(`Served by the ${attempt.label} after ${i} failure(s).`);
+      return { ...result, provider: attempt.provider };
+    } catch (err) {
+      // The first failure is the most diagnostic; later ones are consequences.
+      firstError ??= err;
+      const next = attempts[i + 1];
+      logger.warn(
+        `${attempt.label} failed: ${err.message}${next ? `. Trying the ${next.label}.` : '.'}`,
+      );
     }
   }
+
+  throw firstError;
 }
 
 /** Generation that must produce a JSON object. */
