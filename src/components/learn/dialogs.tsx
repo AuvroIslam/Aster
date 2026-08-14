@@ -222,7 +222,7 @@ export function SearchDialog({
       {voice.results.length > 0 && (
         <ul className="mt-4 max-h-[40vh] space-y-1 overflow-y-auto" aria-label="Search results">
           {voice.results.map((result) => (
-            <li key={result.id}>
+            <li key={result.videoId}>
               <button
                 onClick={() => onPick(result.url)}
                 className="flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"

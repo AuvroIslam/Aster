@@ -117,8 +117,17 @@ function looksLikeFormula(text) {
 }
 
 /**
- * Extracts every embedded raster image on a page as raw RGBA, so it can be
- * handed to the vision model. Returns nothing for pages that are pure text.
+ * Finds every embedded raster image on a page and reports its position and
+ * size. Returns nothing for pages that are pure text.
+ *
+ * Dimensions come straight out of the operator arguments, which are shaped
+ * `[objectId, width, height]`. This deliberately never touches the object
+ * stores: image *pixels* are only populated during rendering, and this runs in
+ * Node with no canvas, so nothing ever renders. `objs.get()` is callback-based
+ * with no error path for an unresolved object, so asking for one registers a
+ * callback that is never invoked — which hung extraction forever on the first
+ * document-global image (the `g_`-prefixed ones, shared between pages). The
+ * dimensions here are all this function ever needed anyway.
  */
 async function extractPageImages(page, pageNumber) {
   const images = [];
@@ -126,33 +135,26 @@ async function extractPageImages(page, pageNumber) {
   try {
     const ops = await page.getOperatorList();
     const { OPS } = await getPdfjs();
+    // One image is often painted many times over; describe it once.
+    const seen = new Set();
 
     for (let i = 0; i < ops.fnArray.length; i += 1) {
       const fn = ops.fnArray[i];
       if (fn !== OPS.paintImageXObject && fn !== OPS.paintInlineImageXObject) continue;
 
-      const arg = ops.argsArray[i][0];
-      const name = typeof arg === 'string' ? arg : null;
-      if (!name) continue;
+      const [name, width, height] = ops.argsArray[i];
+      if (typeof name !== 'string' || seen.has(name)) continue;
+      if (!Number.isFinite(width) || !Number.isFinite(height)) continue;
 
-      // objs.get is callback-based and throws if the object is not resolved yet.
-      const img = await new Promise((resolve) => {
-        try {
-          page.objs.get(name, resolve);
-        } catch {
-          resolve(null);
-        }
-      });
-
-      if (!img?.width || !img?.height) continue;
       // Ignore decorative slivers — rules, bullets, logo marks.
-      if (img.width < 80 || img.height < 80) continue;
+      if (width < 80 || height < 80) continue;
 
+      seen.add(name);
       images.push({
         page: pageNumber,
-        width: img.width,
-        height: img.height,
-        kind: img.width > img.height * 1.6 ? 'chart' : 'figure',
+        width,
+        height,
+        kind: width > height * 1.6 ? 'chart' : 'figure',
       });
     }
   } catch (error) {

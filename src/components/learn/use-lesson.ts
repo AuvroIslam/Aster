@@ -13,12 +13,12 @@ export interface LessonProgress {
 
 /** The server may not name a visual kind; infer one so the UI can pick an icon. */
 function inferKind(description: WireDescription): VisualKind {
-  const declared = description.kind?.toLowerCase();
+  const declared = description.visualType?.toLowerCase();
   if (declared && ['code', 'terminal', 'diagram', 'graph', 'formula', 'slide'].includes(declared)) {
     return declared as VisualKind;
   }
 
-  const text = description.text.toLowerCase();
+  const text = (description.description ?? '').toLowerCase();
   if (/\bterminal\b|\bconsole\b|\bcommand\b|\boutput\b/.test(text)) return 'terminal';
   if (/\bcode\b|\bfunction\b|\bvariable\b|\bsyntax\b/.test(text)) return 'code';
   if (/\bgraph\b|\bplot\b|\bchart\b|\baxis\b/.test(text)) return 'graph';
@@ -34,17 +34,24 @@ function inferKind(description: WireDescription): VisualKind {
  */
 function conceptFor(description: WireDescription): string {
   if (description.concept?.trim()) return description.concept.trim();
-  const firstClause = description.text.split(/[,.;:]/)[0] ?? description.text;
+  const text = description.description ?? '';
+  const firstClause = text.split(/[,.;:]/)[0] || text;
   return firstClause.trim().slice(0, 60).toLowerCase();
 }
 
+/**
+ * Translates one wire moment into the shape the UI works in. This is the only
+ * place the server's field names (`description`, `visualType`) are read — see
+ * `WireDescription` for why they differ. The server emits no stable id, so one
+ * is derived from the timestamp, which is unique within a timeline.
+ */
 function toDescription(wire: WireDescription, index: number): Description {
   return {
-    id: wire.id ?? `d${index}-${Math.round(wire.time * 100)}`,
+    id: `d${index}-${Math.round(wire.time * 100)}`,
     time: wire.time,
     mode: wire.mode ?? 'brief',
     kind: inferKind(wire),
-    text: wire.text,
+    text: wire.description ?? '',
     confidence: wire.confidence ?? 0.9,
     concept: conceptFor(wire),
   };
@@ -60,8 +67,10 @@ export function toLesson(timeline: WireTimeline, meta: {
     title: meta.title,
     channel: meta.channel,
     duration: meta.duration,
-    language: timeline.language ?? 'auto',
-    consideredMoments: timeline.consideredMoments ?? timeline.candidateCount ?? 0,
+    // `language` is a descriptor object on the wire; the UI wants the bare code
+    // it can hand to a speech voice.
+    language: timeline.language?.code ?? 'auto',
+    consideredMoments: timeline.stats?.candidates ?? 0,
     descriptions: (timeline.descriptions ?? []).map(toDescription),
   };
 }
@@ -107,7 +116,7 @@ export function useLesson() {
         const info = await api.videoInfo(url);
         if (cancelledRef.current) return;
 
-        setVideoId(info.id);
+        setVideoId(info.videoId);
         setPhase('processing');
         setProgress({ percent: 5, step: 'Understanding the lesson' });
 
@@ -120,18 +129,20 @@ export function useLesson() {
           try {
             const status = await api.jobStatus(jobId);
 
-            if (status.state === 'error') {
+            if (status.status === 'error') {
               setError(status.error?.message ?? 'Processing failed.');
               setPhase('error');
               return;
             }
 
             setProgress({
-              percent: Math.round((status.progress ?? 0) * 100) || 10,
-              step: status.step ?? status.message ?? 'Describing what matters',
+              // `percent` is already 0–100; `message` is the readable line,
+              // `stage` only a slug.
+              percent: Math.round(status.percent ?? 0) || 10,
+              step: status.message ?? status.stage ?? 'Describing what matters',
             });
 
-            if (status.state === 'done' && status.result) {
+            if (status.status === 'done' && status.result) {
               setLesson(
                 toLesson(status.result, {
                   title: info.title,

@@ -1,10 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { AsterMark, ArrowIcon, PlayIcon } from '@/components/icons';
 import type { LessonPhase, LessonProgress } from './use-lesson';
-import { cn } from '@/lib/utils';
+import { api, type ReadyVideo } from '@/lib/api';
+import { cn, formatTime } from '@/lib/utils';
 
 /** The bar that turns a URL into a described lesson. */
 export function UrlBar({
@@ -169,8 +171,126 @@ export function Processing({
   );
 }
 
+/**
+ * Videos this server has already described, offered as one-click examples.
+ *
+ * Renders nothing when the server is unreachable or has no cached timelines —
+ * the URL bar is the primary path, and a broken list would be worse than none.
+ */
+export function ReadyVideos({
+  onPick,
+  busy,
+  onCount,
+}: {
+  onPick: (url: string) => void;
+  busy?: boolean;
+  /** Reports how many are available, so the empty state can point at them. */
+  onCount?: (count: number) => void;
+}) {
+  const [videos, setVideos] = useState<ReadyVideo[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .readyVideos()
+      .then((data) => {
+        if (cancelled) return;
+        const found = data?.videos ?? [];
+        setVideos(found);
+        onCount?.(found.length);
+      })
+      .catch(() => {
+        /* No server, or nothing cached. Stay out of the way. */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `onCount` is a stable setter from the parent; refetching on identity
+    // changes would hammer the endpoint on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (videos.length === 0) return null;
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      id="ready-to-play"
+      className="panel rounded-panel p-5"
+      aria-labelledby="ready-heading"
+    >
+      <h2 id="ready-heading" className="font-display text-lg font-semibold tracking-tight">
+        Ready to play
+      </h2>
+      <p id="ready-help" className="mt-1 text-sm text-ink-faint">
+        {videos.length === 1
+          ? '1 lesson has already been described on this server.'
+          : `${videos.length} lessons have already been described on this server.`}{' '}
+        They start straight away, with no processing wait.
+      </p>
+
+      <ul className="mt-4 space-y-1.5" aria-describedby="ready-help">
+        {videos.map((video) => (
+          <li key={video.videoId}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onPick(video.url)}
+              aria-label={`${video.title}${video.channel ? `, by ${video.channel}` : ''}${
+                video.duration ? `, ${formatTime(video.duration)}` : ''
+              }, ${video.descriptions} audio description${
+                video.descriptions === 1 ? '' : 's'
+              }. Ready to play now.`}
+              className="group flex w-full items-center gap-3 rounded-card border border-line bg-surface/60 p-2 text-left transition-colors hover:border-line-strong hover:bg-white/[0.06] disabled:opacity-40"
+            >
+              {/* Decorative: the label above already names the lesson. */}
+              <Image
+                src={video.thumbnail}
+                alt=""
+                width={96}
+                height={54}
+                unoptimized
+                className="h-[54px] w-24 shrink-0 rounded object-cover"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm">{video.title}</span>
+                <span className="block truncate text-xs text-ink-faint" aria-hidden>
+                  {video.channel}
+                  {video.channel && video.duration ? ' · ' : ''}
+                  {video.duration ? formatTime(video.duration) : ''}
+                  {` · ${video.descriptions} description${video.descriptions === 1 ? '' : 's'}`}
+                </span>
+              </span>
+              <PlayIcon className="mr-1 h-4 w-4 shrink-0 text-ink-faint transition-colors group-hover:text-ink" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </motion.section>
+  );
+}
+
+/**
+ * Sends the learner to the already-described lessons below, moving keyboard
+ * focus with the scroll so this works without a mouse and announces itself.
+ */
+function goToReadyList() {
+  const section = document.getElementById('ready-to-play');
+  if (!section) return false;
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  section.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  section.querySelector('button')?.focus({ preventScroll: true });
+  return true;
+}
+
 /** Shown before anything is loaded. */
-export function EmptyStage({ onDemo }: { onDemo: () => void }) {
+export function EmptyStage({ onDemo, readyCount = 0 }: { onDemo: () => void; readyCount?: number }) {
+  // Real described lessons beat the fixture whenever the server has any, so
+  // the primary action points at them and only falls back to the sample.
+  const hasReady = readyCount > 0;
+
   return (
     <AnimatePresence>
       <motion.section
@@ -191,11 +311,16 @@ export function EmptyStage({ onDemo }: { onDemo: () => void }) {
           something the narration leaves out.
         </p>
         <button
-          onClick={onDemo}
+          onClick={() => {
+            if (hasReady && goToReadyList()) return;
+            onDemo();
+          }}
           className="mt-6 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm transition-colors hover:border-line-strong"
         >
           <PlayIcon className="h-3.5 w-3.5" />
-          Explore the sample lesson
+          {hasReady
+            ? `Explore ${readyCount} described ${readyCount === 1 ? 'lesson' : 'lessons'}`
+            : 'Explore the sample lesson'}
           <ArrowIcon className="h-3.5 w-3.5" />
         </button>
       </motion.section>

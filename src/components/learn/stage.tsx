@@ -1,7 +1,8 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import type { RefObject } from 'react';
+import { useMemo, type Ref } from 'react';
+import { splitSentences } from './use-playback';
 import { Waveform } from '@/components/motion/waveform';
 import { PlayIcon, PauseIcon, SpeakerIcon, MuteIcon, AsterMark } from '@/components/icons';
 import { formatTime, languageName, cn } from '@/lib/utils';
@@ -12,6 +13,7 @@ export function Stage({
   time,
   playing,
   speaking,
+  spokenSentence = 0,
   holding,
   onToggle,
   onSeek,
@@ -24,16 +26,25 @@ export function Stage({
   time: number;
   playing: boolean;
   speaking: Description | null;
+  /** How far the voice has got through `speaking.text`, as a sentence index. */
+  spokenSentence?: number;
   holding: boolean;
   onToggle: () => void;
   onSeek: (seconds: number) => void;
-  /** Where the YouTube iframe mounts. Absent in fixture mode. */
-  playerHost?: RefObject<HTMLDivElement | null>;
+  /**
+   * Where the YouTube iframe mounts. Absent in fixture mode. A callback ref, so
+   * the hook is notified when this node actually appears — see use-youtube.ts.
+   */
+  playerHost?: Ref<HTMLDivElement>;
   live?: boolean;
   muted?: boolean;
   onMute?: () => void;
 }) {
   const progress = (time / lesson.duration) * 100;
+  const sentences = useMemo(
+    () => (speaking ? splitSentences(speaking.text) : []),
+    [speaking]
+  );
 
   return (
     <section className="panel overflow-hidden rounded-panel" aria-label="Lesson">
@@ -59,43 +70,86 @@ export function Stage({
 
       {/* The lesson surface. Pure black so described content reads as "the
           screen" rather than as part of the app. */}
-      <div className="relative aspect-video overflow-hidden border-y border-line bg-ground-deep">
+      {/*
+        Full width, but capped in height: at 16:9 across a wide monitor the
+        frame alone is taller than the viewport, which would push the transport
+        and the caption off-screen. YouTube pillarboxes inside a wider box, so
+        nothing is cropped.
+      */}
+      <div className="relative mx-auto aspect-video max-h-[68vh] overflow-hidden border-y border-line bg-ground-deep">
         {live ? (
           // The iframe is hidden from assistive tech and cannot take focus:
           // a blind learner must never land inside a player they cannot drive.
           // Every meaningful control lives in Aster's own UI below.
           <div
-            ref={playerHost}
             aria-hidden
             tabIndex={-1}
-            className="pointer-events-none absolute inset-0 h-full w-full [&_iframe]:h-full [&_iframe]:w-full"
-          />
+            className="pointer-events-none absolute inset-0 [&>iframe]:absolute [&>iframe]:inset-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
+          >
+            {/*
+              The IFrame API *replaces* the node it is handed, rather than
+              nesting inside it — so it has to be given a disposable child.
+              Handing it this wrapper instead would destroy the styled box and
+              leave the iframe unsized, which is why the sizing rules above
+              target the iframe as a child of the wrapper, not as the wrapper.
+            */}
+            <div ref={playerHost} />
+          </div>
         ) : (
           <FrameArt kind={speaking?.kind} />
         )}
 
         <AnimatePresence>
           {holding && (
+            // Anchored to the bottom and scrim-free. Dimming or blurring the
+            // frame would hide the very thing being described — and this lesson
+            // is watched by low-vision learners with usable sight, and by
+            // sighted people alongside them.
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center bg-ground-deep/80 backdrop-blur-md"
+              className="pointer-events-none absolute inset-x-0 bottom-0 p-3"
             >
               <motion.div
-                initial={{ scale: 0.96, y: 10, filter: 'blur(8px)' }}
-                animate={{ scale: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="mx-6 max-w-lg rounded-card border border-line-strong bg-surface p-5 text-center"
+                initial={{ y: 12, filter: 'blur(8px)' }}
+                animate={{ y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                // Spans the frame like a subtitle bar. Only the bar is opaque,
+                // so the screen behind it stays readable.
+                className="w-full rounded-card border border-line-strong bg-surface/95 px-4 py-3 backdrop-blur-sm"
               >
                 <span className="label-micro inline-flex items-center gap-2 text-ink">
                   <Waveform bars={4} className="h-3" />
                   Extended description
                 </span>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">{speaking?.text}</p>
-                <p className="mt-3 text-xs text-ink-ghost">
-                  Video held so the explanation is not cut short. It resumes on its own.
+
+                {/*
+                  Revealed sentence by sentence, in step with the voice, rather
+                  than as one wall of text. Sentences already spoken stay on
+                  screen so the thread can be followed; the current one is
+                  brightest.
+                */}
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                  {sentences.slice(0, spokenSentence + 1).map((sentence, i) => (
+                    <motion.span
+                      key={sentence.start}
+                      initial={{ opacity: 0, filter: 'blur(4px)' }}
+                      animate={{ opacity: 1, filter: 'blur(0px)' }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      className={i === spokenSentence ? 'text-ink' : undefined}
+                    >
+                      {sentence.text}{' '}
+                    </motion.span>
+                  ))}
                 </p>
+
+                {sentences.length > 1 && (
+                  <p className="mt-2 text-xs text-ink-ghost">
+                    {spokenSentence + 1} of {sentences.length} · video held so the explanation is
+                    not cut short. It resumes on its own.
+                  </p>
+                )}
               </motion.div>
             </motion.div>
           )}
@@ -205,15 +259,25 @@ export function Stage({
 }
 
 /** A suggestion of what is on screen, keyed to the kind of visual described. */
+/**
+ * The stand-in screen for the sample lesson, which has no real video behind it.
+ *
+ * It has to be legible: drawn too faintly it reads as an image that failed to
+ * load rather than as a deliberate placeholder, which is what a first-time
+ * visitor sees before they have pasted any link.
+ */
 function FrameArt({ kind }: { kind?: Description['kind'] }) {
   return (
     <div className="absolute inset-0 grid place-items-center p-8">
+      <span className="label-micro absolute left-4 top-4 rounded-full border border-line-strong bg-surface/80 px-2.5 py-1 text-ink-faint">
+        Sample lesson · simulated screen
+      </span>
       <motion.div
         key={kind ?? 'idle'}
         initial={{ opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
         animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-md font-mono text-[11px] leading-relaxed text-ink-ghost"
+        className="w-full max-w-md rounded-card border border-line bg-surface/40 p-5 font-mono text-[11px] leading-relaxed text-ink-soft"
       >
         {kind === 'code' && (
           <pre className="whitespace-pre-wrap">{`def insert(node, value):
@@ -232,7 +296,7 @@ height before rotate: 5
 height after  rotate: 3`}</pre>
         )}
         {kind === 'formula' && (
-          <p className="text-center text-lg tracking-wide text-ink-faint">
+          <p className="text-center text-lg tracking-wide text-ink">
             balance = height(left) − height(right)
           </p>
         )}
@@ -244,7 +308,7 @@ height after  rotate: 3`}</pre>
                 initial={{ height: 8 }}
                 animate={{ height: h }}
                 transition={{ duration: 0.6, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
-                className="w-8 rounded-t bg-white/[0.07]"
+                className="w-8 rounded-t bg-bloom/60"
               />
             ))}
           </div>

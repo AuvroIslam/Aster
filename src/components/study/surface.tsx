@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { UploadZone } from './upload';
 import { Reader } from './reader';
+import { PageReader } from './pages';
 import { useDoc } from './use-doc';
 import { AsterMark, SpeakerIcon } from '@/components/icons';
 import { studyDoc as sampleDoc } from '@/lib/fixtures';
@@ -57,7 +58,12 @@ export function StudySurface() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <Reader doc={doc} />
+              {/*
+                A real document is read page by page with Aster explaining as
+                it goes. The fixture chapter has no server behind it, so it
+                keeps the older reader with its own canned Q&A and quiz.
+              */}
+              {loader.doc ? <PageReader doc={doc} /> : <Reader doc={doc} />}
             </motion.div>
           ) : (
             <motion.div
@@ -73,6 +79,7 @@ export function StudySurface() {
                 error={loader.error}
                 onUpload={loader.upload}
                 onSample={() => setUseSample(true)}
+                onOpen={loader.open}
                 onRetry={loader.clear}
               />
             </motion.div>

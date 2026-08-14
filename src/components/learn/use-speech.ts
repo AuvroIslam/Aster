@@ -80,7 +80,13 @@ export function useSpeech({
   }, []);
 
   const speak = useCallback(
-    (text: string, overrides: SpeechSettings = {}) =>
+    (
+      text: string,
+      overrides: SpeechSettings & {
+        /** Fired as the voice crosses each word, with its index into `text`. */
+        onBoundary?: (charIndex: number) => void;
+      } = {}
+    ) =>
       new Promise<SpeakResult>((resolve) => {
         const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
         const content = String(text ?? '').trim();
@@ -139,6 +145,12 @@ export function useSpeech({
           () => finish({ cancelled: false, error: 'speech-timeout' }),
           Math.max(8000, (content.length / 8) * 1000 * (1 / Math.max(0.5, settings.rate)))
         );
+
+        // Drives the on-screen caption, so the text appears at the pace it is
+        // actually spoken rather than all at once.
+        if (overrides.onBoundary) {
+          utterance.onboundary = (event) => overrides.onBoundary?.(event.charIndex);
+        }
 
         utterance.onend = () => finish({ cancelled: false });
         utterance.onerror = (event) =>

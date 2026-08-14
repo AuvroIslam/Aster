@@ -17,6 +17,9 @@ node_modules/
 .env
 .env.*
 !.env.example
+# Also a template, and `.env.*` above would otherwise swallow it — a fresh
+# clone needs this file for the `cp .env.local.example .env.local` setup step.
+!.env.local.example
 *.pem
 *.ppk
 

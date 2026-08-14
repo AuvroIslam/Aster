@@ -5,6 +5,7 @@ import { createApp } from './app.js';
 import { ensureCacheDirs } from './lib/cache.js';
 import { probeBinaries } from './lib/binaries.js';
 import { resolveModel } from './services/gemma.js';
+import { warmBundledDocuments } from './routes/doc.js';
 
 /** Refuses to start, without tearing the process down mid-flight: setting `exitCode` lets Node. */
 function refuseToStart(reason) {
@@ -52,6 +53,11 @@ async function main() {
     logger.info(`Aster API listening on http://localhost:${config.port}`);
     logger.info(`Model proof: http://localhost:${config.port}/api/config`);
   });
+
+  // Prepare the shipped sample document in the background. Deliberately not
+  // awaited: it must never delay the port opening, and the routes fall back to
+  // extracting on demand if this has not finished yet.
+  void warmBundledDocuments();
 
   const shutdown = (signal) => {
     logger.info(`${signal} received — shutting down`);

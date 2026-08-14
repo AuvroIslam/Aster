@@ -65,15 +65,27 @@ export function Timeline({
             >
               <div
                 className={cn(
-                  'group flex gap-3 px-5 py-4 transition-colors duration-300',
+                  'group relative flex gap-3 px-5 py-4 transition-colors duration-300',
                   isCurrent ? 'bg-white/[0.06]' : 'hover:bg-surface/60'
                 )}
               >
+                {/*
+                  The whole row is the jump target, not just the icon — a small
+                  circle is a needlessly precise target, and this is the primary
+                  action for the row. Implemented as one button stretched behind
+                  the content so the row stays a single tab stop, with the
+                  secondary actions layered above it rather than nested inside.
+                */}
                 <button
                   onClick={() => onSeek(description.time)}
-                  aria-label={`Jump to ${formatTime(description.time)}`}
+                  aria-label={`Jump to ${formatTime(description.time)}. ${description.text}`}
+                  className="absolute inset-0 z-0 cursor-pointer rounded-none focus-visible:ring-inset"
+                />
+
+                <span
+                  aria-hidden
                   className={cn(
-                    'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300',
+                    'pointer-events-none relative z-10 mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300',
                     isCurrent
                       ? 'bg-ink text-ground'
                       : isPast
@@ -83,9 +95,9 @@ export function Timeline({
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                </button>
+                </span>
 
-                <div className="min-w-0 flex-1">
+                <div className="pointer-events-none relative z-10 min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="font-mono text-ink">{formatTime(description.time)}</span>
                     <span
@@ -113,7 +125,8 @@ export function Timeline({
 
                   <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{description.text}</p>
 
-                  <div className="mt-2 flex items-center gap-3">
+                  {/* Layered above the row button, so they stay clickable. */}
+                  <div className="pointer-events-auto relative z-20 mt-2 flex items-center gap-3">
                     <button
                       onClick={() => onReplay(description)}
                       className="inline-flex items-center gap-1.5 text-xs text-ink-faint transition-colors hover:text-ink"

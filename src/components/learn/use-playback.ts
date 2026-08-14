@@ -6,6 +6,25 @@ import type { Description, NarrationMode } from '@/lib/types';
 
 const TICK_MS = 100;
 
+/**
+ * Splits a description into the units the caption reveals one at a time.
+ *
+ * A long explanation arriving as a wall of text is unreadable for the very
+ * people most likely to be reading along, so it is revealed sentence by
+ * sentence, in step with the voice. The offsets are indices into the original
+ * string, which is what `onboundary` reports against.
+ */
+export function splitSentences(text: string): { text: string; start: number }[] {
+  const parts: { text: string; start: number }[] = [];
+  const pattern = /[^.!?]+(?:[.!?]+|$)/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const trimmed = match[0].trim();
+    if (trimmed) parts.push({ text: trimmed, start: match.index });
+  }
+  return parts.length ? parts : [{ text, start: 0 }];
+}
+
 export interface PlayerBridge {
   play: () => void;
   pause: () => void;
@@ -40,29 +59,42 @@ export function usePlayback(
   const [voiceURI, setVoiceURI] = useState('');
   const [narration, setNarration] = useState<NarrationMode>('adaptive');
   const [holding, setHolding] = useState(false);
+  /** Index of the last sentence the voice has reached, for the caption. */
+  const [spokenSentence, setSpokenSentence] = useState(0);
 
   const speech = useSpeech({ rate, volume, voiceURI, lang: language });
+
+  // `speak` and `cancel` keep a stable identity across renders (the object
+  // holding them does not). Anything with a dependency array must use these,
+  // never `speech` itself. `speak` reads the live rate/volume/voice through a
+  // ref, so a stable reference still speaks with the current settings.
+  const { speak: speakUtterance, cancel: cancelSpeech } = speech;
 
   const firedRef = useRef<Set<string>>(new Set());
   /** True while a hold is in progress, readable synchronously by the clock. */
   const holdingRef = useRef(false);
 
   const stopSpeaking = useCallback(() => {
-    speech.cancel();
+    cancelSpeech();
     setSpeaking(null);
     if (holdingRef.current) {
       holdingRef.current = false;
       setHolding(false);
       player?.play();
     }
-  }, [speech, player]);
+  }, [cancelSpeech, player]);
 
   const speak = useCallback(
     async (description: Description) => {
       setSpeaking(description);
+      setSpokenSentence(0);
       setHeard((prev) =>
         prev.some((d) => d.id === description.id) ? prev : [...prev, description]
       );
+
+      // Word boundaries arrive several times a second; collapsing them to a
+      // sentence index means the caption only re-renders when it changes.
+      const sentences = splitSentences(description.text);
 
       // Full-explanation mode holds for every moment, not just the long ones —
       // the learner is relying on Aster for the whole lesson.
@@ -74,8 +106,21 @@ export function usePlayback(
         player?.pause();
       }
 
-      const result = await speech.speak(description.text);
+      const result = await speakUtterance(description.text, {
+        onBoundary: (charIndex) => {
+          let index = 0;
+          for (let i = 0; i < sentences.length; i += 1) {
+            if (charIndex >= sentences[i].start) index = i;
+          }
+          // Never step backwards: a boundary can land inside the previous
+          // sentence's trailing punctuation.
+          setSpokenSentence((prev) => (index > prev ? index : prev));
+        },
+      });
 
+      // Whatever happens, the caption ends up showing the whole description —
+      // a browser that never fires `onboundary` must not leave it truncated.
+      setSpokenSentence(sentences.length - 1);
       setSpeaking((current) => (current?.id === description.id ? null : current));
 
       if (mustHold && holdingRef.current) {
@@ -85,7 +130,7 @@ export function usePlayback(
         if (!result.cancelled) player?.play();
       }
     },
-    [speech, narration, player]
+    [speakUtterance, narration, player]
   );
 
   // The clock. Reads the real player when one is attached, otherwise simulates.
@@ -162,12 +207,18 @@ export function usePlayback(
     setPlaying(false);
   }, [stopSpeaking]);
 
-  useEffect(() => () => speech.cancel(), [speech]);
+  // Depends on `cancelSpeech`, never on `speech`. `useSpeech` returns a fresh
+  // object every render, so keying this on it would re-run the cleanup after
+  // *every* render — and since speaking sets state, the utterance would cancel
+  // itself milliseconds after starting, before it ever made a sound. The
+  // individual callbacks are stable, which makes this a true unmount teardown.
+  useEffect(() => () => cancelSpeech(), [cancelSpeech]);
 
   return {
     time,
     playing,
     speaking,
+    spokenSentence,
     holding,
     heard,
     descriptionsOn,
@@ -188,7 +239,7 @@ export function usePlayback(
     reset,
     syncPlaying,
     replay: (d: Description) => void speak(d),
-    speakText: (text: string) => speech.speak(text),
+    speakText: (text: string) => speakUtterance(text),
     stopSpeaking,
   };
 }

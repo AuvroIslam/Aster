@@ -9,7 +9,7 @@ import { TutorPanel, type TutorHandle } from './tutor';
 import { PracticeSheet } from './practice';
 import { SettingsPanel } from './settings';
 import { ShortcutsDialog, SearchDialog } from './dialogs';
-import { UrlBar, Processing, EmptyStage } from './loader';
+import { UrlBar, Processing, EmptyStage, ReadyVideos } from './loader';
 import { usePlayback } from './use-playback';
 import { useShortcuts } from './use-shortcuts';
 import { useLesson } from './use-lesson';
@@ -33,6 +33,7 @@ export function Workspace() {
   const [highContrast, setHighContrast] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [readyCount, setReadyCount] = useState(0);
   const [announcement, setAnnouncement] = useState('');
 
   const tutorRef = useRef<TutorHandle>(null);
@@ -192,10 +193,64 @@ export function Workspace() {
         </div>
       </header>
 
-      <main
-        id="main"
-        className="mx-auto grid max-w-[1600px] gap-5 p-4 xl:grid-cols-[300px_minmax(0,1fr)_400px]"
-      >
+      {/*
+        The lesson surface runs the full width, with the controls and the tutor
+        stacked beneath it. The screen is the thing being described, so it gets
+        the room; nothing sits beside it competing for width.
+      */}
+      <main id="main" className="mx-auto max-w-[1600px] space-y-5 p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <AnimatePresence mode="wait">
+            {busy || loader.phase === 'error' ? (
+              <Processing
+                key="processing"
+                phase={loader.phase}
+                progress={loader.progress}
+                error={loader.error}
+                onRetry={loader.clear}
+                onDemo={() => {
+                  loader.clear();
+                  setUseSample(true);
+                }}
+              />
+            ) : lesson ? (
+              <motion.div key="lesson" className="space-y-5">
+                <Stage
+                  lesson={lesson}
+                  time={playback.time}
+                  playing={playback.playing}
+                  speaking={playback.speaking}
+                  spokenSentence={playback.spokenSentence}
+                  holding={playback.holding}
+                  onToggle={playback.toggle}
+                  onSeek={playback.seek}
+                  playerHost={youtube.hostRef}
+                  live={live}
+                  muted={youtube.muted}
+                  onMute={live ? youtube.toggleMute : undefined}
+                />
+              </motion.div>
+            ) : (
+              <motion.div key="empty" className="space-y-5">
+                <EmptyStage onDemo={() => setUseSample(true)} readyCount={readyCount} />
+                <ReadyVideos
+                  busy={busy}
+                  onCount={setReadyCount}
+                  onPick={(url) => {
+                    setUseSample(false);
+                    void loader.load(url);
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)_420px]">
         <motion.div
           initial={{ opacity: 0, x: -20, filter: 'blur(10px)' }}
           animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
@@ -232,46 +287,15 @@ export function Workspace() {
           transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-5"
         >
-          <AnimatePresence mode="wait">
-            {busy || loader.phase === 'error' ? (
-              <Processing
-                key="processing"
-                phase={loader.phase}
-                progress={loader.progress}
-                error={loader.error}
-                onRetry={loader.clear}
-                onDemo={() => {
-                  loader.clear();
-                  setUseSample(true);
-                }}
-              />
-            ) : lesson ? (
-              <motion.div key="lesson" className="space-y-5">
-                <Stage
-                  lesson={lesson}
-                  time={playback.time}
-                  playing={playback.playing}
-                  speaking={playback.speaking}
-                  holding={playback.holding}
-                  onToggle={playback.toggle}
-                  onSeek={playback.seek}
-                  playerHost={youtube.hostRef}
-                  live={live}
-                  muted={youtube.muted}
-                  onMute={live ? youtube.toggleMute : undefined}
-                />
-                <Timeline
-                  descriptions={lesson.descriptions}
-                  time={playback.time}
-                  heardIds={heardIds}
-                  onSeek={playback.seek}
-                  onReplay={playback.replay}
-                />
-              </motion.div>
-            ) : (
-              <EmptyStage key="empty" onDemo={() => setUseSample(true)} />
-            )}
-          </AnimatePresence>
+          {lesson && (
+            <Timeline
+              descriptions={lesson.descriptions}
+              time={playback.time}
+              heardIds={heardIds}
+              onSeek={playback.seek}
+              onReplay={playback.replay}
+            />
+          )}
         </motion.div>
 
         <motion.div
@@ -354,6 +378,7 @@ export function Workspace() {
             </motion.div>
           </AnimatePresence>
         </motion.div>
+        </div>
       </main>
 
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />

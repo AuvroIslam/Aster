@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { SpeakerIcon, EyeIcon, SparkIcon } from '@/components/icons';
+import { SpeakerIcon, SparkIcon } from '@/components/icons';
 import { Waveform } from '@/components/motion/waveform';
 import { cn } from '@/lib/utils';
 import type { NarrationMode } from '@/lib/types';
@@ -55,62 +55,85 @@ export function SettingsPanel({
         </h2>
       </header>
 
-      <div className="space-y-6 p-5">
-        {/* The central choice: let the creator lead, or have Aster explain it all. */}
+      <div className="space-y-5 p-4">
+        {/* The central choice: let the creator lead, or have Aster explain it
+            all. A segmented control rather than two paragraph cards — the
+            difference is one line, and only the chosen one needs explaining. */}
         <fieldset>
           <legend className="text-sm font-medium">How much should I say?</legend>
-          <div className="mt-3 space-y-2">
-            <NarrationOption
-              value="adaptive"
-              current={narration}
-              onSelect={onNarration}
-              title="Adaptive"
-              body="The creator narrates. I speak only into the pauses, and only when the screen carries something they never mention."
-            />
-            <NarrationOption
-              value="full"
-              current={narration}
-              onSelect={onNarration}
-              title="Full explanation"
-              body="I explain the whole lesson for a learner who cannot see it — not a transcript read aloud."
-            />
+          <div
+            role="radiogroup"
+            aria-label="How much should I say?"
+            className="mt-2 flex gap-1 rounded-full border border-line p-1"
+          >
+            {NARRATION_MODES.map((mode) => (
+              <button
+                key={mode.value}
+                role="radio"
+                aria-checked={narration === mode.value}
+                onClick={() => onNarration(mode.value)}
+                className={cn(
+                  'relative flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                  narration === mode.value ? 'text-ground' : 'text-ink-soft hover:text-ink'
+                )}
+              >
+                {narration === mode.value && (
+                  <motion.span
+                    layoutId="narration-active"
+                    transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+                    className="absolute inset-0 rounded-full bg-ink"
+                  />
+                )}
+                <span className="relative z-10">{mode.label}</span>
+              </button>
+            ))}
           </div>
+          <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+            {NARRATION_MODES.find((m) => m.value === narration)?.body}
+          </p>
         </fieldset>
 
         <Slider
           id="rate"
-          label="Speech speed"
+          label="Speed"
           value={rate}
           min={0.5}
           max={2.5}
           step={0.05}
           onChange={onRate}
           display={`${rate.toFixed(2)}x`}
-          ticks={['0.5x', 'Normal', '2.5x']}
         />
 
         <Slider
           id="volume"
-          label="Description volume"
+          label="Volume"
           value={volume}
           min={0.1}
           max={1}
           step={0.05}
           onChange={onVolume}
           display={`${Math.round(volume * 100)}%`}
-          ticks={['10%', '', '100%']}
         />
 
         <div>
-          <label htmlFor="voice" className="text-sm font-medium">
-            Description voice <span className="font-normal text-ink-faint">({language})</span>
-          </label>
+          <div className="flex items-baseline justify-between gap-2">
+            <label htmlFor="voice" className="text-sm font-medium">
+              Voice <span className="font-normal text-ink-faint">({language})</span>
+            </label>
+            <button
+              onClick={onTestVoice}
+              disabled={!speechSupported}
+              className="text-xs text-ink-faint transition-colors hover:text-ink disabled:opacity-50"
+            >
+              Test
+            </button>
+          </div>
           <select
             id="voice"
             value={voiceURI}
             onChange={(e) => onVoiceURI(e.target.value)}
             disabled={!speechSupported || voices.length === 0}
-            className="mt-2 w-full rounded-card border border-line bg-surface px-3 py-2.5 text-sm outline-none transition-colors focus:border-ink disabled:opacity-50"
+            className="mt-2 w-full rounded-card border border-line bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-ink disabled:opacity-50"
           >
             <option value="">Best available</option>
             {voices.map((voice) => (
@@ -119,15 +142,6 @@ export function SettingsPanel({
               </option>
             ))}
           </select>
-
-          <button
-            onClick={onTestVoice}
-            disabled={!speechSupported}
-            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-card border border-line py-2.5 text-sm transition-colors hover:border-line-strong disabled:opacity-50"
-          >
-            <SpeakerIcon className="h-4 w-4" />
-            Test this voice
-          </button>
 
           {/* Voice availability is a real limitation for non-English lessons,
               so it is stated plainly rather than failing silently. */}
@@ -143,47 +157,35 @@ export function SettingsPanel({
           ) : null}
         </div>
 
-        <Toggle
-          id="descriptions"
-          label="Speak audio descriptions automatically"
-          checked={descriptionsOn}
-          onChange={onDescriptionsOn}
-        />
+        <div className="space-y-3 border-t border-line pt-4">
+          <Toggle
+            id="descriptions"
+            label="Speak descriptions automatically"
+            checked={descriptionsOn}
+            onChange={onDescriptionsOn}
+          />
+          <Toggle
+            id="contrast"
+            label="High contrast"
+            checked={highContrast}
+            onChange={onHighContrast}
+          />
+        </div>
 
-        <Toggle
-          id="contrast"
-          label="High contrast mode"
-          checked={highContrast}
-          onChange={onHighContrast}
-        />
-
-        <div className="rounded-card border border-line bg-surface-raised p-4">
-          <p className="flex items-center gap-2 text-sm font-medium">
+        <div className="space-y-2 border-t border-line pt-4 text-xs text-ink-faint">
+          <p className="flex items-center gap-2">
             <span className="text-bloom">
               <Waveform active={speaking} bars={4} />
             </span>
             {speaking ? 'Aster is speaking' : 'Aster is quiet'}
           </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-ink-faint">
-            Press <kbd className="rounded bg-white/[0.06] px-1 py-0.5 font-mono">S</kbd> to skip a
-            description, <kbd className="rounded bg-white/[0.06] px-1 py-0.5 font-mono">R</kbd> to
-            replay the last one,{' '}
-            <kbd className="rounded bg-white/[0.06] px-1 py-0.5 font-mono">?</kbd> for every
-            shortcut.
+          <p className="leading-relaxed">
+            <Key>S</Key> skip · <Key>R</Key> replay · <Key>?</Key> all shortcuts
           </p>
-        </div>
-
-        <div className="flex items-start gap-3 rounded-card border border-line bg-surface-raised p-4">
-          <span className="mt-0.5 text-bloom">
-            <SparkIcon className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-sm font-medium">Running on Gemma</p>
-            <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-              Every description, answer and question comes from Gemma — runnable locally, with no
-              per-request API cost.
-            </p>
-          </div>
+          <p className="flex items-center gap-1.5 leading-relaxed">
+            <SparkIcon className="h-3.5 w-3.5 shrink-0 text-bloom" />
+            Running on Gemma — no per-request API cost.
+          </p>
         </div>
       </div>
     </section>
@@ -199,7 +201,6 @@ function Slider({
   step,
   onChange,
   display,
-  ticks,
 }: {
   id: string;
   label: string;
@@ -209,7 +210,6 @@ function Slider({
   step: number;
   onChange: (value: number) => void;
   display: string;
-  ticks: string[];
 }) {
   const percent = ((value - min) / (max - min)) * 100;
 
@@ -236,60 +236,31 @@ function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="scrubber mt-3 w-full"
+        className="scrubber mt-2 w-full"
         style={{
           background: `linear-gradient(to right, var(--bloom) ${percent}%, var(--line-strong) ${percent}%)`,
         }}
       />
-      <div className="mt-2 flex justify-between text-xs text-ink-faint">
-        {ticks.map((tick, i) => (
-          <span key={i}>{tick}</span>
-        ))}
-      </div>
     </div>
   );
 }
 
-function NarrationOption({
-  value,
-  current,
-  onSelect,
-  title,
-  body,
-}: {
-  value: NarrationMode;
-  current: NarrationMode;
-  onSelect: (value: NarrationMode) => void;
-  title: string;
-  body: string;
-}) {
-  const active = current === value;
+const NARRATION_MODES: { value: NarrationMode; label: string; body: string }[] = [
+  {
+    value: 'adaptive',
+    label: 'Adaptive',
+    body: 'I speak only into the creator’s pauses, and only when the screen carries something they never mention.',
+  },
+  {
+    value: 'full',
+    label: 'Full explanation',
+    body: 'I explain the whole lesson for a learner who cannot see it — not a transcript read aloud.',
+  },
+];
 
-  return (
-    <button
-      onClick={() => onSelect(value)}
-      aria-pressed={active}
-      className={cn(
-        'relative w-full overflow-hidden rounded-card border p-3 text-left transition-colors duration-300',
-        active
-          ? 'border-line-strong bg-surface-raised'
-          : 'border-line bg-surface hover:border-line-strong'
-      )}
-    >
-      {active && (
-        <motion.span
-          layoutId="narration-active"
-          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
-          className="absolute inset-y-0 left-0 w-1 bg-bloom"
-        />
-      )}
-      <span className="flex items-center gap-2 text-sm font-medium">
-        <EyeIcon className={cn('h-4 w-4', active ? 'text-bloom' : 'text-ink-faint')} />
-        {title}
-      </span>
-      <span className="mt-1 block text-xs leading-relaxed text-ink-soft">{body}</span>
-    </button>
-  );
+/** A keyboard key in running text. */
+function Key({ children }: { children: React.ReactNode }) {
+  return <kbd className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-ink-soft">{children}</kbd>;
 }
 
 function Toggle({

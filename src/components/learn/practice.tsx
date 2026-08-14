@@ -16,6 +16,12 @@ import type { Description, LearnerQuestion, PracticeVerdict } from '@/lib/types'
 function judge(answer: string, expects: string[]): PracticeVerdict {
   if (!answer.trim()) return 'unanswered';
 
+  // On a real lesson the model supplies no expectation list, so there is no
+  // rubric to match against. Falling through would score every attempt as
+  // 'missed' — telling the learner they were wrong against a standard we never
+  // had. Retrieval practice earns its value from the attempt, so credit it.
+  if (expects.length === 0) return 'correct';
+
   const normalised = answer.toLowerCase();
   const hits = expects.filter((point) =>
     point
@@ -184,8 +190,15 @@ function Verdict({
   item: ReturnType<typeof buildPracticeSet>[number];
   onNext: () => void;
 }) {
+  // Without a rubric nothing was actually checked, so the verdict must not
+  // claim it was. The answer still counts as retrieval practice.
+  const unscored = item.expects.length === 0;
+
   const tone = {
-    correct: { label: 'That’s it.', className: 'border-line bg-white/[0.05] text-ink-soft' },
+    correct: {
+      label: unscored ? 'Good — said in your own words.' : 'That’s it.',
+      className: 'border-line bg-white/[0.05] text-ink-soft',
+    },
     partial: { label: 'Halfway there.', className: 'border-line-strong bg-white/[0.06] text-live' },
     missed: { label: 'Let me come at it differently.', className: 'border-line-strong bg-white/[0.06] text-ink' },
     unanswered: { label: '', className: '' },

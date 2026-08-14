@@ -59,11 +59,29 @@ export function useDoc() {
     }
   }, []);
 
+  /** Opens a document the server already holds — no upload, no wait. */
+  const open = useCallback(async (id: string) => {
+    setError(null);
+    setDoc(null);
+    setPhase('extracting');
+    try {
+      setDoc(toStudyDoc(await api.doc(id)));
+      setPhase('ready');
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not reach the Aster server. Is it running on port 5174?'
+      );
+      setPhase('error');
+    }
+  }, []);
+
   const clear = useCallback(() => {
     setPhase('idle');
     setDoc(null);
     setError(null);
   }, []);
 
-  return { phase, doc, error, upload, clear };
+  return { phase, doc, error, upload, open, clear };
 }

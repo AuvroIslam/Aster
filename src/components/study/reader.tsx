@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { PracticeSheet } from '@/components/learn/practice';
+import { useSpeech } from '@/components/learn/use-speech';
 import { Waveform } from '@/components/motion/waveform';
 import {
   DocIcon,
@@ -61,6 +62,7 @@ export function Reader({ doc }: { doc: StudyDoc }) {
   const [asked, setAsked] = useState<LearnerQuestion[]>([]);
   const [tab, setTab] = useState<'ask' | 'practice'>('ask');
   const [draft, setDraft] = useState('');
+  const { speak, supported: speechSupported } = useSpeech();
 
   const describedBlocks = useMemo(
     () => doc.blocks.filter((block) => block.described),
@@ -73,11 +75,17 @@ export function Reader({ doc }: { doc: StudyDoc }) {
     [doc, read]
   );
 
-  function readAloud(block: DocBlock) {
+  /**
+   * Real synthesis, not a timer: `speak` resolves when the utterance actually
+   * ends, so the reading indicator tracks the voice rather than an estimate.
+   * Starting a second block cancels the first, which resolves its promise as
+   * cancelled — hence the guard, so the older call cannot clear the newer one.
+   */
+  async function readAloud(block: DocBlock) {
     setSpeaking(block.id);
     setRead((prev) => new Set(prev).add(block.id));
-    const words = block.content.split(/\s+/).length;
-    setTimeout(() => setSpeaking(null), Math.max(1800, words * 220));
+    await speak(block.content);
+    setSpeaking((current) => (current === block.id ? null : current));
   }
 
   function ask(question: string) {
@@ -183,7 +191,8 @@ export function Reader({ doc }: { doc: StudyDoc }) {
 
                   <button
                     onClick={() => readAloud(block)}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-faint opacity-0 transition-all duration-300 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+                    disabled={!speechSupported}
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-faint opacity-0 transition-all duration-300 hover:text-ink focus-visible:opacity-100 disabled:cursor-not-allowed disabled:hover:text-ink-faint group-hover:opacity-100"
                   >
                     {isSpeaking ? (
                       <>
@@ -193,7 +202,7 @@ export function Reader({ doc }: { doc: StudyDoc }) {
                     ) : (
                       <>
                         <SpeakerIcon className="h-3.5 w-3.5" />
-                        Read this aloud
+                        {speechSupported ? 'Read this aloud' : 'Speech unavailable in this browser'}
                       </>
                     )}
                   </button>

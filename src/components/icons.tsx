@@ -1,4 +1,5 @@
 import type { SVGProps } from 'react';
+import Image, { type ImageProps } from 'next/image';
 import { cn } from '@/lib/utils';
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -136,29 +137,28 @@ export function TerminalIcon(props: IconProps) {
 }
 
 /**
- * The aster flower: sixteen tapering petals around a small dotted disc. Drawn
- * as pure geometry so it stays crisp from 16px in the nav to 96px in the hero.
+ * The aster bloom. One source asset drives every placement, from the 12px
+ * badge on the stage to the 56px mark in the hero, so the brand stays
+ * identical everywhere. Callers set the size with height/width classes.
+ *
+ * Decorative by default: the mark always sits beside the word "Aster" or a
+ * heading that already names it, so an empty alt keeps screen readers from
+ * announcing it twice. Pass an alt to make it meaningful.
  */
 export function AsterMark({
-  petals = 16,
   className,
+  alt = '',
   ...props
-}: IconProps & { petals?: number }) {
+}: Omit<ImageProps, 'src' | 'width' | 'height' | 'alt'> & { alt?: string }) {
   return (
-    // Defaults to the bloom yellow; pass a text-* class to override.
-    <svg viewBox="0 0 64 64" fill="none" className={cn('text-bloom', className)} {...props}>
-      {Array.from({ length: petals }).map((_, i) => (
-        <path
-          key={i}
-          // A leaf shape from the centre outward, mirrored about its own axis.
-          d="M32 32 C29.4 24 29.6 15 32 4 C34.4 15 34.6 24 32 32 Z"
-          fill="currentColor"
-          transform={`rotate(${(360 / petals) * i} 32 32)`}
-        />
-      ))}
-      {/* The disc florets, lighter than the petals as on the real flower. */}
-      <circle cx="32" cy="32" r="5.4" fill="currentColor" />
-      <circle cx="32" cy="32" r="4" className="fill-bloom-soft" />
-    </svg>
+    <Image
+      src="/aster-logo.png"
+      alt={alt}
+      // Intrinsic size of the asset; the rendered size comes from className.
+      width={288}
+      height={288}
+      className={cn('select-none object-contain', className)}
+      {...props}
+    />
   );
 }

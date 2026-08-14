@@ -14,6 +14,7 @@ interface YTPlayer {
   mute(): void;
   unMute(): void;
   isMuted(): boolean;
+  getIframe(): HTMLIFrameElement;
   destroy(): void;
 }
 
@@ -64,7 +65,17 @@ export function useYouTube({
   videoId: string | null;
   onStateChange?: (playing: boolean) => void;
 }) {
-  const hostRef = useRef<HTMLDivElement>(null);
+  /**
+   * A callback ref backed by state, not a plain `useRef`.
+   *
+   * The lesson view mounts inside an `AnimatePresence mode="wait"`, so the host
+   * node does not exist at the moment `videoId` arrives — the outgoing view is
+   * still animating away. A `useRef` would be null on that pass and the effect,
+   * keyed only on `videoId`, would never run again. Holding the node in state
+   * makes its arrival its own trigger.
+   */
+  const [hostEl, setHostEl] = useState<HTMLDivElement | null>(null);
+  const hostRef = useCallback((node: HTMLDivElement | null) => setHostEl(node), []);
   const playerRef = useRef<YTPlayer | null>(null);
   const [ready, setReady] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -74,12 +85,12 @@ export function useYouTube({
   stateHandler.current = onStateChange;
 
   useEffect(() => {
-    if (!videoId || !hostRef.current) return;
+    if (!videoId || !hostEl) return;
 
     let cancelled = false;
 
     void loadApi().then(() => {
-      if (cancelled || !hostRef.current || !window.YT) return;
+      if (cancelled || !window.YT) return;
 
       // Re-use the existing player when only the video changed.
       if (playerRef.current) {
@@ -87,8 +98,12 @@ export function useYouTube({
         return;
       }
 
-      playerRef.current = new window.YT.Player(hostRef.current, {
+      playerRef.current = new window.YT.Player(hostEl, {
         videoId,
+        // Without these the API stamps its default 640×390 onto the iframe as
+        // width/height attributes, which beat the CSS box it sits in.
+        width: '100%',
+        height: '100%',
         playerVars: {
           controls: 0,
           disablekb: 1,
@@ -101,6 +116,22 @@ export function useYouTube({
             if (cancelled) return;
             setReady(true);
             setDuration(event.target.getDuration());
+            // Autoplay policies can start the video muted without asking. Read
+            // the real state back, so the speaker control tells the truth about
+            // whether there is any sound.
+            setMuted(event.target.isMuted());
+
+            // The API discarded the host element, and with it the attributes
+            // that kept the player out of the tab order. Re-apply them to the
+            // iframe itself: focus must never land in a player a blind learner
+            // cannot drive, and an aria-hidden node that can still take focus
+            // is exactly the trap that creates.
+            const iframe = event.target.getIframe?.();
+            if (iframe) {
+              iframe.setAttribute('tabindex', '-1');
+              iframe.setAttribute('aria-hidden', 'true');
+              iframe.setAttribute('title', 'Lesson video, controlled by Aster');
+            }
           },
           onStateChange: (event: { data: number }) => {
             const YT = window.YT;
@@ -118,7 +149,7 @@ export function useYouTube({
     return () => {
       cancelled = true;
     };
-  }, [videoId]);
+  }, [videoId, hostEl]);
 
   useEffect(
     () => () => {

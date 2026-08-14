@@ -1,10 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
+const description =
+  'Aster transforms visual learning content into an interactive, audio-first learning experience for blind and low-vision students.';
+
 export const metadata: Metadata = {
+  // Resolves the relative image URL below into an absolute one for crawlers.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: 'Aster — audio-first learning',
-  description:
-    'Aster transforms visual learning content into an interactive, audio-first learning experience for blind and low-vision students.',
+  description,
+  // icon.png / apple-icon.png in this directory are picked up automatically.
+  openGraph: {
+    title: 'Aster — audio-first learning',
+    description,
+    images: [{ url: '/aster-logo.png', width: 288, height: 288, alt: 'The Aster bloom' }],
+  },
 };
 
 export const viewport: Viewport = {

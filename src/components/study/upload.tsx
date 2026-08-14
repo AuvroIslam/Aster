@@ -1,8 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DocIcon, SparkIcon, AsterMark } from '@/components/icons';
+import { api, type LibraryDoc } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { DocPhase } from './use-doc';
 
@@ -12,17 +13,76 @@ const STAGES = [
   'Working out the structure',
 ];
 
+/**
+ * Documents that ship with the app. Nothing to upload and nothing to wait for,
+ * which is also how someone can try the study surface without handing over a
+ * file of their own.
+ */
+function DocLibrary({ onOpen, busy }: { onOpen: (id: string) => void; busy: boolean }) {
+  const [docs, setDocs] = useState<LibraryDoc[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .docLibrary()
+      .then((data) => !cancelled && setDocs(data?.documents ?? []))
+      .catch(() => {
+        /* No server, or nothing bundled. The drop zone is the primary path. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (docs.length === 0) return null;
+
+  return (
+    <section className="panel mt-4 rounded-panel p-4" aria-labelledby="library-heading">
+      <h2 id="library-heading" className="text-sm font-medium">
+        Already prepared
+      </h2>
+      <p className="mt-1 text-xs text-ink-faint">
+        Open one straight away — no upload, no processing wait.
+      </p>
+      <ul className="mt-3 space-y-1.5">
+        {docs.map((doc) => (
+          <li key={doc.id}>
+            <button
+              onClick={() => onOpen(doc.id)}
+              disabled={busy}
+              className="group flex w-full items-center gap-3 rounded-card border border-line bg-surface/60 px-3 py-2.5 text-left transition-colors hover:border-line-strong hover:bg-white/[0.06] disabled:opacity-40"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-bloom">
+                <DocIcon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm">{doc.title}</span>
+                <span className="block truncate text-xs text-ink-faint">
+                  {doc.pages} pages · {doc.words.toLocaleString()} words · {doc.visuals} visuals
+                </span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function UploadZone({
   phase,
   error,
   onUpload,
   onSample,
+  onOpen,
   onRetry,
 }: {
   phase: DocPhase;
   error: string | null;
   onUpload: (file: File) => void;
   onSample: () => void;
+  /** Opens a bundled document by id. */
+  onOpen: (id: string) => void;
   onRetry: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -144,6 +204,8 @@ export function UploadZone({
                 Choose a file
               </span>
             </motion.button>
+
+            <DocLibrary onOpen={onOpen} busy={busy} />
 
             <button
               onClick={onSample}

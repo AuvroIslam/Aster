@@ -86,7 +86,7 @@ export function useVoiceSearch() {
 
     try {
       const payload = await api.voiceSearch(blob);
-      setHeard(payload.query);
+      setHeard(payload.transcript);
       setResults(payload.results ?? []);
       setState('idle');
     } catch (err) {

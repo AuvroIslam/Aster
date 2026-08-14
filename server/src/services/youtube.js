@@ -177,7 +177,7 @@ export async function downloadVideo(videoId, onProgress) {
 
   // Prefer a video-only mp4 stream: it is the smallest download that still
   // gives ffmpeg the frames we need, and it never requires muxing.
-  const format = [
+  const adaptive = [
     `bv*[height<=${height}][ext=mp4]`,
     `bv*[height<=${height}]`,
     `b[height<=${height}]`,
@@ -185,28 +185,60 @@ export async function downloadVideo(videoId, onProgress) {
     'b',
   ].join('/');
 
+  // A muxed stream carries audio we have no use for, but YouTube serves it
+  // over a steadier path. Bigger download, and worth it as a last resort:
+  // the alternative is no lesson at all.
+  const muxed = [`b[height<=${height}]`, 'b'].join('/');
+
+  /**
+   * YouTube intermittently answers 403 for an adaptive format URL that worked
+   * moments earlier. `--retries` below cannot recover from it — that governs
+   * fragment retries within one run, whereas a rejected format URL has to be
+   * re-signed, and only a fresh yt-dlp invocation does that. So retry the
+   * process itself, dropping to the muxed stream on the final attempt.
+   */
+  const attempts = [adaptive, adaptive, muxed];
+
   onProgress?.({ percent: 0, message: 'Downloading video' });
 
-  await logger.time('yt-dlp download', () =>
-    runYtdlp(
-      bin,
-      (cookieArgs) => [
-        '-f',
-        format,
-        '--no-playlist',
-        '--no-warnings',
-        '--no-part',
-        '--retries',
-        '3',
-        ...baseArgs(),
-        ...cookieArgs,
-        '-o',
-        output,
-        watchUrl(videoId),
-      ],
-      { timeoutMs: 600_000 },
-    ),
-  );
+  let lastError = null;
+  for (const [attempt, format] of attempts.entries()) {
+    try {
+      await logger.time('yt-dlp download', () =>
+        runYtdlp(
+          bin,
+          (cookieArgs) => [
+            '-f',
+            format,
+            '--no-playlist',
+            '--no-warnings',
+            '--no-part',
+            '--retries',
+            '3',
+            ...baseArgs(),
+            ...cookieArgs,
+            '-o',
+            output,
+            watchUrl(videoId),
+          ],
+          { timeoutMs: 600_000 },
+        ),
+      );
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err;
+      const reason = String(err.message || '').split('\n').find((l) => /ERROR|Error/.test(l)) ?? err.message;
+      logger.warn(
+        `Video download attempt ${attempt + 1}/${attempts.length} for ${videoId} failed: ${reason.trim()}`,
+      );
+      if (attempt < attempts.length - 1) {
+        onProgress?.({ percent: 0, message: 'Retrying the video download' });
+        await sleep(2000 * (attempt + 1));
+      }
+    }
+  }
+  if (lastError) throw lastError;
 
   const file = await findCachedVideo(videoId);
   if (!file) throw new AppError('Video download finished but no file was produced.', 502, 'download_failed');
