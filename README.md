@@ -64,6 +64,11 @@ descriptions that will never come — to claim it.
 | **Describe-everything AI** | It narrates every frame and talks straight over the instructor. Two voices at once is not a lesson; it is noise, and it is unusable. |
 | **Waiting for accessible content** | Someone else has to make it. For the ~1.1 billion hours of lectures already on YouTube, nobody will. |
 
+Laid out side by side, the pattern is that each tool solves a different problem well and none of
+them solves *hers*. A screen reader is built for an interface, a transcript for speech, a chatbot
+for questions asked in the abstract. None was built for someone sitting through a lesson that
+keeps pointing at things.
+
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/12.png" width="820" alt="Comparison: screen readers, transcripts and general AI chatbots against Aster" />
 </p>
@@ -89,6 +94,11 @@ narration, so it never overlaps the instructor. Most of the time it says nothing
   </picture>
 </p>
 
+Read it left to right and the shape of the thing is the *narrowing*. Every candidate moment
+enters, and most of them leave again — filtered out because the narration already covered it, or
+because the model was not confident enough to be worth trusting. What survives to the right-hand
+side is the small set of moments where the screen genuinely carries something the words did not.
+
 That judgement is visible as a number in the product. On a real lesson:
 
 <p align="center">
@@ -99,9 +109,17 @@ That judgement is visible as a number in the product. On a real lesson:
 
 ### One minute of a physics lecture
 
+The rule is easier to believe as a minute of real time than as a principle. Here is what Aster
+does across sixty seconds of a lecture — including the two stretches where the right behaviour is
+to do nothing at all, because the teacher is already explaining it perfectly well.
+
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/11.png" width="820" alt="Minute-by-minute walkthrough of what Aster does during a physics lecture" />
 </p>
+
+Note what happens at 0:14. The parabola appears and nobody says a word, so Aster stops the video
+rather than rushing a description into a gap too short to hold it. The lesson waits for her; she
+never has to keep up with it.
 
 ---
 
@@ -117,10 +135,16 @@ what gets her to the exam.
   </picture>
 </p>
 
+She brings a link and her own notes; she leaves with a lesson she can actually sit an exam on.
+The four stages in the middle are one continuous session, not four features — what gets described
+is what she can ask about, and what she asks about is what she gets tested on.
+
 ### The lesson surface
 
-Everything is driven from Aster's own controls — player, transport, speech settings and the
-running list of what was described.
+Everything is driven from Aster's own controls, never the YouTube player: transport, speech
+settings, and the running list of what has been described so far. The video iframe is deliberately
+inert — hidden from screen readers and unable to take focus — so she can never land inside a
+player she has no way to operate.
 
 <p align="center">
   <img src="docs/screenshots/03-lesson-surface.png" width="820" alt="The lesson surface: full-width player, transport, speech controls and description list" />
@@ -129,7 +153,10 @@ running list of what was described.
 ### Ask about the exact thing on screen
 
 Pause anywhere and ask — by keyboard, by one of eight preset keys, or out loud. The answer is
-grounded in *this* frame and *this* lesson, not in the model's general knowledge.
+grounded in *this* frame and *this* lesson, not in the model's general knowledge, so "read the
+code" returns the code actually on screen rather than a plausible-looking invention. Pressing any
+of those keys stops the lesson first: she cannot glance back at what played underneath while she
+was busy asking.
 
 <p align="center">
   <img src="docs/screenshots/06-ask-the-tutor.png" width="820" alt="Asking the tutor about the current frame, with eight one-key presets" />
@@ -165,20 +192,28 @@ loads the one being announced — a lesson found with two keys and no sight.
 
 ### Beyond video: her notes and textbooks too
 
-The same treatment for the PDFs a student is actually examined on. Figures, tables and diagrams
-inside the file are described rather than skipped, and the quiz comes from her own syllabus.
+Lectures are only half of how anyone studies. The same treatment applies to the PDFs a student is
+actually examined on — her textbook chapter, a scanned handout, the slide deck the teacher shared.
+Figures, tables and diagrams inside the file are described rather than skipped, which is precisely
+the content a plain text extraction throws away, and the quiz is drawn from her own syllabus
+instead of a generic question bank.
 
 <p align="center">
   <img src="docs/screenshots/09-study-library.png" width="49%" alt="The study library with a 102-page document prepared" />
   <img src="docs/screenshots/10-study-page-explained.png" width="49%" alt="A diagram-heavy page rendered with Aster's explanation underneath" />
+  <br />
+  <sub><em>Left: a 102-page networking chapter, already prepared. Right: one of its diagram-heavy
+  pages, with Aster's spoken explanation of the figure underneath it.</em></sub>
 </p>
 
 ---
 
 ## Try it without a key
 
-Lessons are already described and cached — baked into the deployed image — so the app is useful
-on the first click: no key, no upload, no three-minute wait.
+Describing a fresh video takes a few minutes, which is a poor first impression and a worse demo.
+So a set of finished lessons ships inside the deployed image and is copied into the cache on first
+boot — English, and a Bengali physics lesson described in Bengali. They play instantly: no key, no
+upload, no waiting.
 
 <p align="center">
   <img src="docs/screenshots/02-ready-to-play.png" width="820" alt="Lessons already described and ready to play instantly" />
@@ -187,6 +222,12 @@ on the first click: no key, no upload, no three-minute wait.
 ---
 
 ## How it is built
+
+A Next.js front end talking to an Express API that owns the whole pipeline. The two pieces worth
+noticing in the diagram are the **cache**, which is why a second viewing costs nothing and why the
+deployed app has lessons ready before anyone visits, and the **fallback ladder** on the model
+keys — a free-tier quota running out partway through a long video is the failure that actually
+happens, so there is a second key and a second host behind it.
 
 <p align="center">
   <picture>
