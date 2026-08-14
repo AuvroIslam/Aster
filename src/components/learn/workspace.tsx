@@ -124,15 +124,29 @@ export function Workspace() {
           playback.setRate(next);
           announce(`Speech speed ${next.toFixed(2)} times`);
         },
+        /*
+         * Asking and searching all stop the video first.
+         *
+         * The lesson does not wait while a learner composes a question, and a
+         * blind learner cannot glance at the screen to catch up on what ran past
+         * underneath — so the instructor kept talking, new descriptions fired,
+         * and the answer arrived on top of both. Pausing is what a sighted
+         * viewer does by reflex here; it just has to be done for them.
+         */
         onFocusAsk: () => {
+          playback.pause();
+          announce('Paused to ask');
           setTab('tutor');
           tutorRef.current?.focus();
         },
         onPreset: (index: number) => {
+          playback.pause();
+          announce('Paused to ask');
           setTab('tutor');
           tutorRef.current?.askPreset(index);
         },
         onSearch: () => {
+          playback.pause();
           setSearchByVoice(true);
           setShowSearch(true);
         },
@@ -239,6 +253,16 @@ export function Workspace() {
                   holding={playback.holding}
                   onToggle={playback.toggle}
                   onSeek={playback.seek}
+                  onSkipSpeech={() => {
+                    playback.stopSpeaking();
+                    announce('Description skipped');
+                  }}
+                  onReplayLast={() => {
+                    if (lastSpokenRef.current) playback.replay(lastSpokenRef.current);
+                  }}
+                  // `heard` is state and resets with the lesson, where
+                  // `lastSpokenRef` is a ref and would not re-render the button.
+                  canReplay={playback.heard.length > 0}
                   playerHost={youtube.hostRef}
                   live={live}
                   muted={youtube.muted}

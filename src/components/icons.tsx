@@ -29,6 +29,26 @@ export function PauseIcon(props: IconProps) {
   );
 }
 
+/** Skip the description Aster is speaking — jump past it to the lesson. */
+export function SkipIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5 5.5v13l9-6.5z" />
+      <path d="M18 5v14" />
+    </svg>
+  );
+}
+
+/** Replay the last description — an arrow curving back on itself. */
+export function ReplayIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 12a8 8 0 1 0 2.3-5.6" />
+      <path d="M4 4v4.5h4.5" />
+    </svg>
+  );
+}
+
 export function SpeakerIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

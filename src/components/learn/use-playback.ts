@@ -195,6 +195,23 @@ export function usePlayback(
     });
   }, [speaking, stopSpeaking, player]);
 
+  /**
+   * Pause, and stay paused.
+   *
+   * Not `toggle`: asking a question or opening voice search must never *start* a
+   * video that was already stopped, and must leave it stopped whatever state it
+   * was in — so this is idempotent where `toggle` is not.
+   *
+   * Order matters. Mid-explanation the video is being *held*, and `stopSpeaking`
+   * releases that hold by resuming playback — so the pause has to come after it,
+   * never before, or the video quietly plays on under the question.
+   */
+  const pause = useCallback(() => {
+    if (holdingRef.current || speaking) stopSpeaking();
+    player?.pause();
+    setPlaying(false);
+  }, [speaking, stopSpeaking, player]);
+
   /** Called by the player bridge when YouTube itself changes state. */
   const syncPlaying = useCallback((next: boolean) => setPlaying(next), []);
 
@@ -235,6 +252,7 @@ export function usePlayback(
     setNarration,
     setDescriptionsOn,
     toggle,
+    pause,
     seek,
     reset,
     syncPlaying,

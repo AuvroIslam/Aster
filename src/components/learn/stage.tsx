@@ -4,7 +4,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, type Ref } from 'react';
 import { splitSentences } from './use-playback';
 import { Waveform } from '@/components/motion/waveform';
-import { PlayIcon, PauseIcon, SpeakerIcon, MuteIcon, AsterMark } from '@/components/icons';
+import {
+  PlayIcon,
+  PauseIcon,
+  SkipIcon,
+  ReplayIcon,
+  SpeakerIcon,
+  MuteIcon,
+  AsterMark,
+} from '@/components/icons';
 import { formatTime, languageName, cn } from '@/lib/utils';
 import type { Description, Lesson } from '@/lib/types';
 
@@ -17,6 +25,9 @@ export function Stage({
   holding,
   onToggle,
   onSeek,
+  onSkipSpeech,
+  onReplayLast,
+  canReplay = false,
   playerHost,
   live = false,
   muted = false,
@@ -31,6 +42,12 @@ export function Stage({
   holding: boolean;
   onToggle: () => void;
   onSeek: (seconds: number) => void;
+  /** Cut the description Aster is speaking short. Mirrors the S key. */
+  onSkipSpeech?: () => void;
+  /** Say the last description again. Mirrors the R key. */
+  onReplayLast?: () => void;
+  /** False until something has actually been said, which is what R replays. */
+  canReplay?: boolean;
   /**
    * Where the YouTube iframe mounts. Absent in fixture mode. A callback ref, so
    * the hook is notified when this node actually appears — see use-youtube.ts.
@@ -187,6 +204,36 @@ export function Stage({
           {playing ? <PauseIcon className="h-3.5 w-3.5" /> : <PlayIcon className="h-3.5 w-3.5" />}
         </button>
 
+        {/*
+          Skip and Replay, spelled out rather than hidden behind S and R.
+          They were keyboard-only, which quietly assumed the two groups who need
+          them most had already read the shortcut list: someone with low vision
+          using a mouse, and a sighted person sitting alongside. The keys still
+          work and are printed on the buttons, so the shortcut teaches itself.
+        */}
+        <div className="flex shrink-0 items-center gap-2">
+          <TransportButton
+            onClick={onSkipSpeech}
+            // Nothing is being said, so there is nothing to cut short.
+            disabled={!onSkipSpeech || !speaking}
+            label="Skip"
+            hint="S"
+            title="Skip the description being spoken (S)"
+          >
+            <SkipIcon className="h-3.5 w-3.5" />
+          </TransportButton>
+
+          <TransportButton
+            onClick={onReplayLast}
+            disabled={!onReplayLast || !canReplay}
+            label="Replay"
+            hint="R"
+            title="Say the last description again (R)"
+          >
+            <ReplayIcon className="h-3.5 w-3.5" />
+          </TransportButton>
+        </div>
+
         <div className="relative flex-1">
           <label htmlFor="scrub" className="sr-only">
             Position in lesson
@@ -255,6 +302,52 @@ export function Stage({
         </p>
       </div>
     </section>
+  );
+}
+
+/**
+ * A labelled transport control sitting under the video.
+ *
+ * The label is the point. An icon alone would be one more thing to decode for a
+ * learner with partial sight, and the keycap doubles as the lesson that the same
+ * action is one keystroke away.
+ */
+function TransportButton({
+  onClick,
+  disabled,
+  label,
+  hint,
+  title,
+  children,
+}: {
+  onClick?: () => void;
+  disabled?: boolean;
+  label: string;
+  hint: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      whileTap={disabled ? undefined : { scale: 0.96 }}
+      className={cn(
+        'flex h-9 items-center gap-2 rounded-full border border-line-strong px-3 text-xs font-medium transition-colors',
+        disabled
+          ? 'cursor-not-allowed text-ink-ghost opacity-40'
+          : 'text-ink-soft hover:bg-white/[0.06] hover:text-ink'
+      )}
+    >
+      {children}
+      {label}
+      <kbd className="rounded border border-line px-1 font-mono text-[10px] text-ink-faint">
+        {hint}
+      </kbd>
+    </motion.button>
   );
 }
 

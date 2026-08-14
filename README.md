@@ -1,65 +1,235 @@
 <h1 align="center">Aster</h1>
 
-<p align="center"><strong>Audio-first learning for blind and low-vision students.</strong></p>
+<p align="center"><strong>Learning you can hear.</strong></p>
 
-Aster turns visual learning content — YouTube lessons, PDFs, lecture notes — into an
-interactive, audio-first experience. It describes what the instructor never says out loud,
-answers questions about the exact thing on screen, and then practises you on the parts you
-had to take on trust.
+<p align="center">
+  <a href="https://aster-coral.vercel.app"><strong>Try it live →</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#running-it">Run it locally</a>
+  &nbsp;·&nbsp;
+  <a href="docs/Aster-Pitch-Deck">Pitch deck</a>
+</p>
 
-```
-Watch  →  Understand  →  Ask  →  Practice
-```
+<p align="center">
+  <img src="docs/screenshots/01-landing-hero.png" width="880" alt="Aster's landing page: a visual lesson on one side, the same lesson as audio on the other" />
+</p>
 
-## The problem
+---
 
-Most learning content is deeply visual: code on screen, a diagram, a graph, a formula. For a
-blind or low-vision learner, both existing options fail. Screen readers and captions read the
-*words* and miss everything the instructor points at — "as you can see here…" becomes a dead
-end. Describe-everything tools narrate every frame and talk over the instructor, turning a
-lesson into noise.
+## Meera has the same right to this lecture
+
+Picture a fifteen-year-old in a lower-middle-class home in India. Call her Meera. Her
+father drives an auto-rickshaw. There is one phone in the house, and a data pack that has
+to last the month.
+
+Meera is blind.
+
+Her physics teacher moves fast, so like millions of students in India she does what
+everyone else does — she goes to YouTube, where the entire syllabus is taught for free by
+people who explain it better. This is the great equaliser of her generation. A student in
+a village can watch the same lecture as a student in Delhi, and it costs neither of them
+anything.
+
+Except it does cost Meera something. Fourteen minutes into the lesson, the teacher stops
+talking, draws a parabola on the board, and says:
+
+> **"As you can see here…"**
+
+And the lesson ends, for her, right there. Not because the physics is beyond her — because
+nobody said out loud what was on the screen. Her sighted classmate takes in the curve in
+half a second and moves on. Meera hears silence, then a sentence that assumes she saw it.
+
+**The video is free. The lesson is not.** That gap is not about ability or intelligence. It
+is entirely about whether anyone bothered to describe the picture — and it repeats every few
+minutes, in every subject, for her entire education.
+
+Aster exists because Meera has exactly the same right to that YouTube lecture as the rest of
+us, and she should not have to ask anyone's permission — or wait for the creator to add
+descriptions that will never come — to claim it.
+
+<p align="center">
+  <img src="docs/screenshots/05-speaking-caption.png" width="820" alt="Aster speaking an extended description while holding the video, revealed sentence by sentence" />
+  <br />
+  <sub><em>The parabola, described — spoken into the pause, never over the teacher.</em></sub>
+</p>
+
+---
+
+## Why the things that already exist don't solve it
+
+| What she has today | Why it fails |
+|---|---|
+| **Screen readers** | They read the *interface*, not the lesson. The play button is announced; the diagram is not. |
+| **Captions & transcripts** | They carry the words the teacher said — and the whole problem is what the teacher *didn't* say. "As you can see here" is captioned perfectly and means nothing. |
+| **Describe-everything AI** | It narrates every frame and talks straight over the instructor. Two voices at once is not a lesson; it is noise, and it is unusable. |
+| **Waiting for accessible content** | Someone else has to make it. For the ~1.1 billion hours of lectures already on YouTube, nobody will. |
+
+<p align="center">
+  <img src="docs/Aster-Pitch-Deck/12.png" width="820" alt="Comparison: screen readers, transcripts and general AI chatbots against Aster" />
+</p>
+
+---
 
 ## What Aster does differently
 
-**It decides before it describes.** For each candidate moment the question is not *"what is on
-screen?"* but *"can the learner follow this without seeing it?"* Only when the answer is no does
-Aster speak — and it speaks into a natural pause, so it never overlaps the instructor.
+**It decides before it describes.** For every candidate moment the question is not *"what is
+on screen?"* but:
 
-> The rule behind everything: silence is better than a wrong description.
+> ### *"Can the learner follow this without seeing it?"*
 
-**It practises the gap, not the lesson.** This is the teaching method, and it is what separates
-Aster from a generic quiz generator. Two signals drive every practice question:
+Only when the answer is **no** does Aster speak — and it speaks into a natural pause in the
+narration, so it never overlaps the instructor. Most of the time it says nothing at all.
+
+> **The rule behind everything: silence is better than a wrong description.**
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/02-how-aster-works-dark.png" />
+    <img src="docs/diagrams/02-how-aster-works-light.png" width="880" alt="The decide-then-describe pipeline and the confidence rule that keeps Aster quiet" />
+  </picture>
+</p>
+
+That judgement is visible as a number in the product. On a real lesson:
+
+<p align="center">
+  <img src="docs/screenshots/04-description-timeline.png" width="820" alt="25 moments examined, 12 described — Aster chose silence at the other 13" />
+  <br />
+  <sub><em><strong>25 moments examined · 12 described.</strong> Aster chose to stay quiet at the other 13.</em></sub>
+</p>
+
+### One minute of a physics lecture
+
+<p align="center">
+  <img src="docs/Aster-Pitch-Deck/11.png" width="820" alt="Minute-by-minute walkthrough of what Aster does during a physics lecture" />
+</p>
+
+---
+
+## Watch → Understand → Ask → Practice
+
+Describing the screen gets Meera back to where her classmate started. The rest of the loop is
+what gets her to the exam.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/03-solution-overview-dark.png" />
+    <img src="docs/diagrams/03-solution-overview-light.png" width="880" alt="What a learner brings, the Watch-Understand-Ask-Practice loop, and what they leave with" />
+  </picture>
+</p>
+
+### The lesson surface
+
+Everything is driven from Aster's own controls — player, transport, speech settings and the
+running list of what was described.
+
+<p align="center">
+  <img src="docs/screenshots/03-lesson-surface.png" width="820" alt="The lesson surface: full-width player, transport, speech controls and description list" />
+</p>
+
+### Ask about the exact thing on screen
+
+Pause anywhere and ask — by keyboard, by one of eight preset keys, or out loud. The answer is
+grounded in *this* frame and *this* lesson, not in the model's general knowledge.
+
+<p align="center">
+  <img src="docs/screenshots/06-ask-the-tutor.png" width="820" alt="Asking the tutor about the current frame, with eight one-key presets" />
+</p>
+
+### Practice the gap, not the lesson
+
+This is the teaching method, and it is what separates Aster from a quiz generator. Two signals
+drive every practice question:
 
 | Signal | Why it matters |
 |---|---|
-| A visual Aster had to describe | The concept reached the learner through the ear rather than the eye — second-hand, single pass, nothing to glance back at |
-| A question the learner asked | An explicit, timestamped admission of uncertainty |
+| **A visual Aster had to describe** | The concept reached the learner through the ear rather than the eye — second-hand, single pass, nothing to glance back at |
+| **A question the learner asked** | An explicit, timestamped admission of uncertainty |
 
-A concept carrying both is the highest priority in the set. A concept the instructor narrated
-fully is **never tested** — the learner received it on equal terms with a sighted student, so
-there is no gap to close. The logic lives in [`src/lib/practice.ts`](src/lib/practice.ts).
+A concept carrying both is the highest priority in the set. **A concept the instructor narrated
+fully is never tested** — Meera received it on equal terms with a sighted student, so there is no
+gap to close. Miss a question and the concept is re-explained from a different angle — never the
+same words again — then asked later. The logic lives in [`src/lib/practice.ts`](src/lib/practice.ts).
 
-Miss a question and the concept is re-explained from a different angle — never the same words
-again — then asked later.
+<p align="center">
+  <img src="docs/screenshots/07-practice-question.png" width="820" alt="A spoken practice question drawn from the lesson" />
+</p>
 
-## Surfaces
+### Find a lesson without seeing the screen
 
-| Route | What it is |
-|---|---|
-| `/` | Landing page — the problem, the loop, the teaching method |
-| `/learn` | Lesson surface: player, description timeline, tutor, practice |
-| `/study` | Notes and PDFs: upload, described figures and tables, document Q&A, quizzes |
+Hold <kbd>W</kbd>, say what you want to learn, and the results are read back. <kbd>Enter</kbd>
+loads the one being announced — a lesson found with two keys and no sight.
+
+<p align="center">
+  <img src="docs/screenshots/08-voice-search.png" width="820" alt="Spoken search: press W, speak, and the results are read back" />
+</p>
+
+### Beyond video: her notes and textbooks too
+
+The same treatment for the PDFs a student is actually examined on. Figures, tables and diagrams
+inside the file are described rather than skipped, and the quiz comes from her own syllabus.
+
+<p align="center">
+  <img src="docs/screenshots/09-study-library.png" width="49%" alt="The study library with a 102-page document prepared" />
+  <img src="docs/screenshots/10-study-page-explained.png" width="49%" alt="A diagram-heavy page rendered with Aster's explanation underneath" />
+</p>
+
+---
+
+## Try it without a key
+
+Lessons are already described and cached — baked into the deployed image — so the app is useful
+on the first click: no key, no upload, no three-minute wait.
+
+<p align="center">
+  <img src="docs/screenshots/02-ready-to-play.png" width="820" alt="Lessons already described and ready to play instantly" />
+</p>
+
+---
+
+## How it is built
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/01-system-architecture-dark.png" />
+    <img src="docs/diagrams/01-system-architecture-light.png" width="880" alt="Browser to API to pipeline to Gemma, with the cache and the key fallback ladder" />
+  </picture>
+</p>
+
+**Gemma generates everything.** Every description, answer, practice question and explanation
+comes from Gemma 4. yt-dlp (download and search), ffmpeg (frames) and the browser's own speech
+engines are supporting tools around it — none of them generates content.
+
+| Surface | Route | What it is |
+|---|---|---|
+| Landing | `/` | The problem, the loop, the teaching method |
+| Lesson | `/learn` | Player, description timeline, tutor, practice |
+| Study | `/study` | Notes and PDFs: upload, described figures, document Q&A, quizzes |
+
+### Live deployment
+
+| Half | Host | Why there |
+|---|---|---|
+| Next.js app | **Vercel** — [aster-coral.vercel.app](https://aster-coral.vercel.app) | Static/SSR, no binaries, no long jobs |
+| Express API | **Azure App Service** (Linux container) | Needs yt-dlp, ffmpeg, a writable cache, and runs that take minutes |
+
+YouTube refuses anonymous downloads from datacenter IPs, so the deployed API sends every yt-dlp
+request out through a residential proxy — the bot-check keys on the *IP*, not the session, which
+is why cookies rot within days on a server and a proxy fixes it outright. Full write-up in
+[`docs/deploy.md`](docs/deploy.md).
 
 ## Accessibility
 
 Accessibility is the product, not a later pass.
 
 - Every action has a single-key shortcut; press <kbd>?</kbd> for the full list.
+- **Skip** and **Replay** sit under the video as labelled buttons *and* on <kbd>S</kbd> / <kbd>R</kbd>.
+- Asking a question (<kbd>1</kbd>–<kbd>8</kbd>, <kbd>A</kbd>) or searching (<kbd>W</kbd>) pauses the
+  lesson first — a blind learner cannot glance back at what ran past underneath.
+- The YouTube iframe is `aria-hidden` and cannot take focus: nobody lands inside a player they
+  cannot drive.
 - ARIA live regions announce state changes; every control is a native element.
-- Visible 3px focus rings, WCAG-AA contrast, and a high-contrast mode.
-- Adjustable speech rate and language.
-- **`prefers-reduced-motion` is honoured throughout** — every animation in the app checks it,
-  because motion here is decoration and never information.
+- Visible 3px focus rings, WCAG-AA contrast, a high-contrast mode, adjustable speech rate.
+- **`prefers-reduced-motion` is honoured throughout** — motion here is decoration, never information.
 
 ## Running it
 
@@ -103,18 +273,23 @@ server/                 Express API — the whole model pipeline
     comprehension.js    understand-the-whole-video pass
     timeline.js         decide-then-describe orchestration + confidence rules
     pdf.js              PDF text, table, formula and figure extraction
-  src/routes/           meta, video, describe, search, doc
+  src/routes/           meta, video, describe, search, doc, practice
 src/                    Next.js app
   lib/practice.ts       the gap-driven teaching method
   components/learn/     player, speech, scheduler, tutor, practice, search
   components/study/     upload, reader, document Q&A, quiz
   components/motion/    parallax, reveal, blur-in text, tilt, magnetic
+docs/
+  diagrams/             architecture, pipeline and solution diagrams (light + dark)
+  screenshots/          ten captures of the running app
+  deploy.md             how Azure and Vercel are wired
 ```
 
 ## Stack
 
-Next.js (App Router) · TypeScript · Tailwind v4 · Motion · Express. No AI SDKs — Gemma and
-Whisper are called over plain HTTPS.
+Next.js (App Router) · TypeScript · Tailwind v4 · Motion · Express · Gemma 4 · yt-dlp · ffmpeg.
+No AI SDKs — Gemma is called over plain HTTPS. Speech recognition and synthesis both run in the
+browser, so spoken search and spoken answers need no key and no server round trip.
 
 ## Status
 
@@ -126,6 +301,13 @@ Whisper are called over plain HTTPS.
 | PDF text, table, formula, figure extraction | Real |
 | Figure *description* and document quizzes | Needs the key |
 | Gap-driven practice logic | Real, runs on whatever data it is given |
+| Deployed API + web app | Live on Azure and Vercel |
 
 Both surfaces fall back to a sample lesson and sample chapter when no server is reachable, so
 the interface is explorable without a key.
+
+---
+
+<p align="center">
+  <sub><strong>The goal:</strong> any lecture video on the internet becomes usable by a blind student,<br />without asking the creator to do anything.</sub>
+</p>
