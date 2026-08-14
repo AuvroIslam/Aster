@@ -61,16 +61,27 @@ descriptions that will never come — to claim it.
   <sub><em>The parabola, described — spoken into the pause, never over the teacher.</em></sub>
 </p>
 
-<br />
+---
 
-And Meera is not an edge case. She is one of tens of millions, concentrated in exactly the places
-where free video is the only affordable teacher there is.
+## She is not an edge case
+
+Meera is one student, and the point of her is that there is nothing unusual about her. Tens of
+millions of people are in the same position, and the majority of them live in exactly the places
+where free video is the only affordable teacher there is — which is also where paid, professionally
+described course material is least likely to ever arrive.
+
+So the shortfall is not a niche accessibility feature nobody got round to. It sits directly on top
+of the largest body of free teaching ever assembled, and it widens every year that body grows.
+
+<br />
 
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/4.png" width="820" alt="2.2B+ people with vision impairment, 43M blind worldwide, 1B+ hours of video watched daily" />
   <br />
   <sub><em>The gap is widest exactly where learning happens.</em></sub>
 </p>
+
+<br />
 
 ---
 
@@ -83,18 +94,10 @@ where free video is the only affordable teacher there is.
 | **Describe-everything AI** | It narrates every frame and talks straight over the instructor. Two voices at once is not a lesson; it is noise, and it is unusable. |
 | **Waiting for accessible content** | Audio description is the real fix, but it is manual and expensive — so it exists for almost no educational video, and never for the lecture she needs tonight. |
 
-Laid out side by side, the pattern is that each tool solves a different problem well and none of
-them solves *hers*. A screen reader is built for an interface, a transcript for speech, a chatbot
-for questions asked in the abstract. None was built for someone sitting through a lesson that
-keeps pointing at things.
-
-<p align="center">
-  <img src="docs/Aster-Pitch-Deck/12.png" width="820" alt="Comparison: screen readers, transcripts and general AI chatbots against Aster" />
-  <br />
-  <sub><em>Aster is not a screen reader with a chatbot bolted on.</em></sub>
-</p>
-
-<br />
+The pattern is that each tool solves a different problem well and none of them solves *hers*. A
+screen reader is built for an interface, a transcript for speech, a chatbot for questions asked in
+the abstract. None was built for someone sitting through a lesson that keeps pointing at things.
+Aster is not a screen reader with a chatbot bolted on.
 
 ---
 
@@ -122,6 +125,14 @@ That judgement is visible as a number in the product. On a real lesson:
   <br />
   <sub><em><strong>25 moments examined · 12 described.</strong> Aster chose to stay quiet at the other 13.</em></sub>
 </p>
+
+<br />
+
+That ratio is the product working, not the product failing. Thirteen times it looked at a moment
+and concluded the learner was not missing anything — and said nothing. A tool that described all
+twenty-five would be easier to build and useless to listen to.
+
+<br />
 
 ### One minute of a physics lecture
 
@@ -159,14 +170,6 @@ settings, and the running list of what has been described so far. The video ifra
 inert — hidden from screen readers and unable to take focus — so she can never land inside a
 player she has no way to operate.
 
-<p align="center">
-  <img src="docs/screenshots/03-lesson-surface.png" width="820" alt="The lesson surface: full-width player, transport, speech controls and description list" />
-  <br />
-  <sub><em>Player, transport, speech settings, and the running list of what has been described.</em></sub>
-</p>
-
-<br />
-
 ### Ask about the exact thing on screen
 
 Pause anywhere and ask — by keyboard, by one of eight preset keys, or out loud. The answer is
@@ -192,8 +195,12 @@ same words again — then asked later. The logic lives in [`src/lib/practice.ts`
 
 ### Find a lesson without seeing the screen
 
-Hold <kbd>W</kbd>, say what you want to learn, and the results are read back. <kbd>Enter</kbd>
-loads the one being announced — a lesson found with two keys and no sight.
+Everything above assumes she already has a lesson open. Getting to one is its own barrier: a search
+box, a page of thumbnails, and a choice made almost entirely on what the results look like.
+
+Hold <kbd>W</kbd>, say what you want to learn, and the results are read back to her one at a time.
+<kbd>Enter</kbd> loads whichever is being announced — a lesson found with two keys and no sight, and
+no help from anyone else in the house.
 
 <p align="center">
   <img src="docs/screenshots/08-voice-search.png" width="820" alt="Spoken search: press W, speak, and the results are read back" />
@@ -212,11 +219,10 @@ the content a plain text extraction throws away, and the quiz is drawn from her 
 instead of a generic question bank.
 
 <p align="center">
-  <img src="docs/screenshots/09-study-library.png" width="49%" alt="The study library with a 102-page document prepared" />
-  <img src="docs/screenshots/10-study-page-explained.png" width="49%" alt="A diagram-heavy page rendered with Aster's explanation underneath" />
+  <img src="docs/screenshots/10-study-page-explained.png" width="820" alt="A diagram-heavy page rendered with Aster's explanation underneath" />
   <br />
-  <sub><em>Left: a 102-page networking chapter, already prepared. Right: one of its diagram-heavy
-  pages, with Aster's spoken explanation of the figure underneath it.</em></sub>
+  <sub><em>A diagram-heavy page of a 102-page networking chapter, with Aster's explanation of the
+  figure underneath it.</em></sub>
 </p>
 
 ---
