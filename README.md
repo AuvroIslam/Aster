@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/aster-logo.png" width="120" alt="The Aster logo: a yellow aster flower" />
+</p>
+
 <h1 align="center">Aster</h1>
 
 <p align="center"><strong>Learning you can hear.</strong></p>
@@ -12,7 +16,11 @@
 
 <p align="center">
   <img src="docs/screenshots/01-landing-hero.png" width="880" alt="Aster's landing page: a visual lesson on one side, the same lesson as audio on the other" />
+  <br />
+  <sub><em>A visual lesson on one side, the same lesson as audio on the other.</em></sub>
 </p>
+
+<br />
 
 ---
 
@@ -71,7 +79,11 @@ keeps pointing at things.
 
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/12.png" width="820" alt="Comparison: screen readers, transcripts and general AI chatbots against Aster" />
+  <br />
+  <sub><em>Aster is not a screen reader with a chatbot bolted on.</em></sub>
 </p>
+
+<br />
 
 ---
 
@@ -87,17 +99,10 @@ narration, so it never overlaps the instructor. Most of the time it says nothing
 
 > **The rule behind everything: silence is better than a wrong description.**
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/02-how-aster-works-dark.png" />
-    <img src="docs/diagrams/02-how-aster-works-light.png" width="880" alt="The decide-then-describe pipeline and the confidence rule that keeps Aster quiet" />
-  </picture>
-</p>
-
-Read it left to right and the shape of the thing is the *narrowing*. Every candidate moment
-enters, and most of them leave again — filtered out because the narration already covered it, or
-because the model was not confident enough to be worth trusting. What survives to the right-hand
-side is the small set of moments where the screen genuinely carries something the words did not.
+The whole pipeline is a *narrowing*. Every candidate moment enters, and most of them leave again —
+filtered out because the narration already covered it, or because the model was not confident
+enough to be worth trusting. What comes out the other end is the small set of moments where the
+screen genuinely carries something the words did not.
 
 That judgement is visible as a number in the product. On a real lesson:
 
@@ -115,7 +120,11 @@ to do nothing at all, because the teacher is already explaining it perfectly wel
 
 <p align="center">
   <img src="docs/Aster-Pitch-Deck/11.png" width="820" alt="Minute-by-minute walkthrough of what Aster does during a physics lecture" />
+  <br />
+  <sub><em>Sixty seconds of a lecture, and what Aster does at each moment of it.</em></sub>
 </p>
+
+<br />
 
 Note what happens at 0:14. The parabola appears and nobody says a word, so Aster stops the video
 rather than rushing a description into a gap too short to hold it. The lesson waits for her; she
@@ -128,16 +137,9 @@ never has to keep up with it.
 Describing the screen gets Meera back to where her classmate started. The rest of the loop is
 what gets her to the exam.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/03-solution-overview-dark.png" />
-    <img src="docs/diagrams/03-solution-overview-light.png" width="880" alt="What a learner brings, the Watch-Understand-Ask-Practice loop, and what they leave with" />
-  </picture>
-</p>
-
 She brings a link and her own notes; she leaves with a lesson she can actually sit an exam on.
-The four stages in the middle are one continuous session, not four features — what gets described
-is what she can ask about, and what she asks about is what she gets tested on.
+The four stages are one continuous session, not four features — what gets described is what she
+can ask about, and what she asks about is what she gets tested on.
 
 ### The lesson surface
 
@@ -148,7 +150,11 @@ player she has no way to operate.
 
 <p align="center">
   <img src="docs/screenshots/03-lesson-surface.png" width="820" alt="The lesson surface: full-width player, transport, speech controls and description list" />
+  <br />
+  <sub><em>Player, transport, speech settings, and the running list of what has been described.</em></sub>
 </p>
+
+<br />
 
 ### Ask about the exact thing on screen
 
@@ -160,7 +166,11 @@ was busy asking.
 
 <p align="center">
   <img src="docs/screenshots/06-ask-the-tutor.png" width="820" alt="Asking the tutor about the current frame, with eight one-key presets" />
+  <br />
+  <sub><em>Eight preset questions on one key each, or ask anything in your own words.</em></sub>
 </p>
+
+<br />
 
 ### Practice the gap, not the lesson
 
@@ -177,10 +187,6 @@ fully is never tested** — Meera received it on equal terms with a sighted stud
 gap to close. Miss a question and the concept is re-explained from a different angle — never the
 same words again — then asked later. The logic lives in [`src/lib/practice.ts`](src/lib/practice.ts).
 
-<p align="center">
-  <img src="docs/screenshots/07-practice-question.png" width="820" alt="A spoken practice question drawn from the lesson" />
-</p>
-
 ### Find a lesson without seeing the screen
 
 Hold <kbd>W</kbd>, say what you want to learn, and the results are read back. <kbd>Enter</kbd>
@@ -188,7 +194,11 @@ loads the one being announced — a lesson found with two keys and no sight.
 
 <p align="center">
   <img src="docs/screenshots/08-voice-search.png" width="820" alt="Spoken search: press W, speak, and the results are read back" />
+  <br />
+  <sub><em>A lesson found with two keys and no sight.</em></sub>
 </p>
+
+<br />
 
 ### Beyond video: her notes and textbooks too
 
@@ -215,10 +225,6 @@ So a set of finished lessons ships inside the deployed image and is copied into 
 boot — English, and a Bengali physics lesson described in Bengali. They play instantly: no key, no
 upload, no waiting.
 
-<p align="center">
-  <img src="docs/screenshots/02-ready-to-play.png" width="820" alt="Lessons already described and ready to play instantly" />
-</p>
-
 ---
 
 ## How it is built
@@ -230,11 +236,12 @@ keys — a free-tier quota running out partway through a long video is the failu
 happens, so there is a second key and a second host behind it.
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/01-system-architecture-dark.png" />
-    <img src="docs/diagrams/01-system-architecture-light.png" width="880" alt="Browser to API to pipeline to Gemma, with the cache and the key fallback ladder" />
-  </picture>
+  <img src="docs/diagrams/01-system-architecture-light.png" width="880" alt="Browser to API to pipeline to Gemma, with the cache and the key fallback ladder" />
+  <br />
+  <sub><em>How a request travels: browser → API → pipeline → Gemma, with the cache beside it.</em></sub>
 </p>
+
+<br />
 
 **Gemma generates everything.** Every description, answer, practice question and explanation
 comes from Gemma 4. yt-dlp (download and search), ffmpeg (frames) and the browser's own speech
@@ -350,5 +357,16 @@ the interface is explorable without a key.
 ---
 
 <p align="center">
-  <sub><strong>The goal:</strong> any lecture video on the internet becomes usable by a blind student,<br />without asking the creator to do anything.</sub>
+  <strong>The goal:</strong> any lecture video on the internet becomes usable by a blind student,
+  <br />without asking the creator to do anything.
+</p>
+
+<br />
+
+<p align="center">
+  <img src="docs/Aster-Pitch-Deck/14.png" width="820" alt="Thank you, from Team Aster" />
+</p>
+
+<p align="center">
+  <sub>The full deck lives in <a href="docs/Aster-Pitch-Deck">docs/Aster-Pitch-Deck</a>.</sub>
 </p>
