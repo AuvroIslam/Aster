@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="https://youtu.be/ANY_swvypIY">
-    <img src="docs/screenshots/01-landing-hero.png" width="880" alt="Watch the Aster demo video" />
+    <img src="docs/screenshots/00-demo-thumbnail.png" width="880" alt="Watch the Aster demo video" />
   </a>
   <br />
   <sub><em>▶ Watch the demo — a visual lesson on one side, the same lesson as audio on the other.</em></sub>
