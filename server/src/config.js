@@ -103,13 +103,6 @@ export const config = {
     maxVideoHeight: int(env.MAX_VIDEO_HEIGHT, 480),
   },
 
-  // Voice search — speech-to-text so a blind learner can search YouTube by speaking.
-  voice: {
-    openaiApiKey: env.OPENAI_API_KEY || '',
-    whisperModel: env.WHISPER_MODEL || 'whisper-1',
-    openaiBaseUrl: (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
-  },
-
   // YouTube search — powered by yt-dlp's built-in search (no extra API key).
   search: {
     maxResults: int(env.SEARCH_MAX_RESULTS, 6),

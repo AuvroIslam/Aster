@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useDictation } from './use-dictation';
 import { api, ApiError, type SearchResult } from '@/lib/api';
 
 export type VoiceState = 'idle' | 'recording' | 'transcribing' | 'error';
@@ -8,92 +9,19 @@ export type VoiceState = 'idle' | 'recording' | 'transcribing' | 'error';
 /**
  * Hold-to-speak search.
  *
- * Records a short clip with MediaRecorder, posts it to the server, which
- * transcribes it with Whisper and searches YouTube. Whisper is ASR only — it
- * generates no content, it just turns the spoken query into text.
+ * Recognition happens in the browser, so a spoken search reaches the server as
+ * plain text and there is no transcription key to configure. The trade is that
+ * this needs Chrome or Edge — the same browsers the app already needs for
+ * speech synthesis, so it costs nothing extra in practice. Typed search works
+ * everywhere.
  */
 export function useVoiceSearch() {
   const [state, setState] = useState<VoiceState>('idle');
-  const [available, setAvailable] = useState(false);
   const [heard, setHeard] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Spoken search needs a server-side key; the button stays hidden without one.
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .voiceSearchStatus()
-      .then((status) => !cancelled && setAvailable(Boolean(status.enabled)))
-      .catch(() => !cancelled && setAvailable(false));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const stopTracks = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-  }, []);
-
-  const start = useCallback(async () => {
-    if (state === 'recording') return;
-    setError(null);
-    setHeard('');
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      chunksRef.current = [];
-
-      const recorder = new MediaRecorder(stream);
-      recorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
-      };
-      recorder.start();
-      setState('recording');
-    } catch {
-      setError('I could not reach your microphone. Check the browser permission.');
-      setState('error');
-    }
-  }, [state]);
-
-  const stop = useCallback(async () => {
-    const recorder = recorderRef.current;
-    if (!recorder || recorder.state === 'inactive') return;
-
-    const finished = new Promise<Blob>((resolve) => {
-      recorder.onstop = () =>
-        resolve(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
-    });
-
-    recorder.stop();
-    setState('transcribing');
-
-    const blob = await finished;
-    stopTracks();
-
-    // A clip this short is almost always a mis-press, not a query.
-    if (blob.size < 1200) {
-      setState('idle');
-      return;
-    }
-
-    try {
-      const payload = await api.voiceSearch(blob);
-      setHeard(payload.transcript);
-      setResults(payload.results ?? []);
-      setState('idle');
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not transcribe that.');
-      setState('error');
-    }
-  }, [stopTracks]);
+  const dictation = useDictation();
 
   const searchText = useCallback(async (query: string) => {
     if (!query.trim()) return;
@@ -110,6 +38,29 @@ export function useVoiceSearch() {
     }
   }, []);
 
+  const start = useCallback(async () => {
+    if (state === 'recording') return;
+    setError(null);
+    setHeard('');
+
+    if (!dictation.supported) {
+      setError('This browser cannot listen. Type your search instead.');
+      setState('error');
+      return;
+    }
+
+    setState('recording');
+    const spoken = await dictation.listen();
+    if (!spoken.trim()) {
+      setState('idle');
+      setError('I did not catch that. Hold a moment longer and speak.');
+      return;
+    }
+    await searchText(spoken);
+  }, [state, dictation, searchText]);
+
+  const stop = useCallback(() => dictation.stop(), [dictation]);
+
   const reset = useCallback(() => {
     setHeard('');
     setResults([]);
@@ -117,7 +68,19 @@ export function useVoiceSearch() {
     setState('idle');
   }, []);
 
-  useEffect(() => () => stopTracks(), [stopTracks]);
-
-  return { state, available, heard, results, error, start, stop, searchText, reset };
+  return {
+    state,
+    available: dictation.supported,
+    heard,
+    results,
+    error: error ?? dictation.error,
+    start,
+    stop,
+    searchText,
+    reset,
+    /** Words appearing as they are spoken, so the learner sees it working. */
+    transcript: dictation.transcript,
+  };
 }
+
+export default useVoiceSearch;

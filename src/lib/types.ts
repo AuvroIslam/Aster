@@ -55,6 +55,11 @@ export interface PracticeItem {
   sourceTime: number;
   /** Open response, because a list of options cannot be held in the ear. */
   prompt: string;
+  /**
+   * What Aster originally said about this concept. The only ground truth the
+   * grader has, and the thing the learner is being asked to recall.
+   */
+  reference: string;
   /** What a correct answer must contain — used to judge a spoken explanation. */
   expects: string[];
   /** The different-angle re-explanation, used when the learner misses it. */

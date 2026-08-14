@@ -100,6 +100,9 @@ export function buildPracticeSet(
       reason,
       sourceTime,
       prompt: buildPrompt(concept, reason, sourceTime),
+      // Whatever the learner actually received about this concept: the
+      // description they heard, or failing that the answer they were given.
+      reference: description?.text ?? question?.answer ?? concept,
       expects: notes[concept]?.expects ?? [],
       reexplain: notes[concept]?.reexplain ?? '',
       priority,

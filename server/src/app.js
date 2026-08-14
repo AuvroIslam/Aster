@@ -11,6 +11,7 @@ import { videoRouter } from './routes/video.js';
 import { describeRouter } from './routes/describe.js';
 import { searchRouter } from './routes/search.js';
 import { docRouter } from './routes/doc.js';
+import { practiceRouter } from './routes/practice.js';
 
 export function createApp() {
   const app = express();
@@ -36,6 +37,7 @@ export function createApp() {
   app.use(describeRouter);
   app.use(searchRouter);
   app.use(docRouter);
+  app.use(practiceRouter);
 
   // Serve the built client when it exists, so `npm start` runs the whole app.
   const clientDist = path.join(REPO_ROOT, 'client', 'dist');

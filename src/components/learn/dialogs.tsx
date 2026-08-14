@@ -145,10 +145,17 @@ export function SearchDialog({
           )}
         >
           {recording ? (
-            <>
-              <Waveform bars={7} className="h-6" />
-              Listening — release to search
-            </>
+            <span className="flex flex-col items-center gap-2">
+              <span className="flex items-center gap-3">
+                <Waveform bars={7} className="h-6" />
+                Listening — release to search
+              </span>
+              {/* Showing the words as they land is the only proof a blind
+                  learner has that the microphone is actually hearing them. */}
+              {voice.transcript && (
+                <span className="max-w-sm text-sm text-ink">“{voice.transcript}”</span>
+              )}
+            </span>
           ) : busy ? (
             <>
               <Waveform bars={4} className="h-4" />

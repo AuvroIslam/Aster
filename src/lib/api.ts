@@ -273,8 +273,6 @@ export const api = {
   search: (query: string) =>
     request<{ results: SearchResult[] }>(`/api/search?q=${encodeURIComponent(query)}`),
 
-  voiceSearchStatus: () => request<{ enabled: boolean }>('/api/voice-search/status'),
-
   /** Upload a PDF as a raw body; the server extracts its block structure. */
   uploadDoc: async (file: File) => {
     const response = await fetch(
@@ -308,6 +306,58 @@ export const api = {
 
   doc: (id: string) => request<WireDoc>(`/api/doc/${id}`),
 
+  /**
+   * Tutor questions about the lesson's subject matter, generated from the
+   * whole video rather than from what Aster happened to describe.
+   */
+  practiceQuestions: (args: { videoId: string; focus?: string[]; count?: number }) =>
+    request<{
+      videoId: string;
+      questions: { id: string; question: string; concept: string; reference: string }[];
+      cached?: boolean;
+      degraded?: boolean;
+    }>('/api/practice/questions', {
+      method: 'POST',
+      body: { videoId: args.videoId, focus: args.focus, count: args.count },
+    }),
+
+  /** Judges a spoken answer against what Aster originally said. */
+  gradeAnswer: (args: {
+    concept: string;
+    question: string;
+    reference: string;
+    answer: string;
+    signal?: AbortSignal;
+  }) =>
+    request<{ verdict: 'correct' | 'partial' | 'missed'; feedback: string; degraded?: boolean }>(
+      '/api/practice/grade',
+      {
+        method: 'POST',
+        body: {
+          concept: args.concept,
+          question: args.question,
+          reference: args.reference,
+          answer: args.answer,
+        },
+        signal: args.signal,
+      }
+    ),
+
+  /** A nudge for a learner who has gone quiet — not the answer. */
+  practiceHint: (args: { concept: string; reference: string; signal?: AbortSignal }) =>
+    request<{ hint: string }>('/api/practice/hint', {
+      method: 'POST',
+      body: { concept: args.concept, reference: args.reference },
+      signal: args.signal,
+    }),
+
+  /** A question about the document being read. */
+  askDoc: (id: string, question: string, page?: number, signal?: AbortSignal) =>
+    request<{ id: string; page: number | null; question: string; answer: string }>(
+      `/api/doc/${id}/ask`,
+      { method: 'POST', body: { question, page }, signal }
+    ),
+
   /** Documents bundled with the app — no upload needed. */
   docLibrary: () => request<{ documents: LibraryDoc[]; count: number }>('/api/doc/library'),
 
@@ -323,36 +373,6 @@ export const api = {
       `/api/doc/${id}/page/${page}/explain`,
       { method: 'POST', signal }
     ),
-
-  /** Send a recorded clip; the server transcribes it with Whisper and searches. */
-  voiceSearch: async (blob: Blob, opts: { language?: string } = {}) => {
-    const qs = opts.language ? `?language=${encodeURIComponent(opts.language)}` : '';
-    const response = await fetch(apiUrl(`/api/voice-search${qs}`), {
-      method: 'POST',
-      headers: { 'Content-Type': blob.type || 'audio/webm' },
-      body: blob,
-    });
-
-    const text = await response.text();
-    let payload: unknown = null;
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      payload = null;
-    }
-
-    if (!response.ok) {
-      const err = (payload as { error?: { message?: string; code?: string } } | null)?.error;
-      throw new ApiError(
-        err?.message ?? `Request failed with status ${response.status}`,
-        response.status,
-        err?.code
-      );
-    }
-
-    // The server calls the recognised text `transcript`, not `query`.
-    return payload as { transcript: string; results: SearchResult[]; message?: string };
-  },
 };
 
 export default api;

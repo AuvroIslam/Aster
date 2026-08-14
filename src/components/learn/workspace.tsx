@@ -369,6 +369,9 @@ export function Workspace() {
                 <PracticeSheet
                   heard={playback.heard}
                   asked={asked}
+                  all={lesson?.descriptions ?? []}
+                  videoId={live ? loader.videoId : null}
+                  speak={(text) => playback.speakText(text)}
                   onSeek={(seconds) => {
                     playback.seek(seconds);
                     setTab('tutor');

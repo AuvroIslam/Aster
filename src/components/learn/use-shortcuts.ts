@@ -32,8 +32,6 @@ function isTyping(target: EventTarget | null) {
  */
 export function useShortcuts(handlers: ShortcutHandlers, enabled = true) {
   useEffect(() => {
-    if (!enabled) return;
-
     function onKeyDown(event: KeyboardEvent) {
       // Escape must work even mid-typing — it is the stop-talking key.
       if (event.key === 'Escape') {
@@ -44,6 +42,25 @@ export function useShortcuts(handlers: ShortcutHandlers, enabled = true) {
       if (isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
 
       const key = event.key;
+
+      /*
+       * Finding a lesson and asking for help are how someone *without* a
+       * lesson gets started, so they cannot be gated on having one — pressing
+       * W on the empty page used to do nothing at all, which is the worst
+       * possible answer for a learner who cannot see that a search box exists.
+       * Everything below drives playback and does need a lesson.
+       */
+      if (key.toLowerCase() === 'w') {
+        event.preventDefault();
+        handlers.onSearch();
+        return;
+      }
+      if (key === '?') {
+        handlers.onHelp();
+        return;
+      }
+
+      if (!enabled) return;
 
       if (key >= '1' && key <= '8') {
         event.preventDefault();
@@ -92,13 +109,6 @@ export function useShortcuts(handlers: ShortcutHandlers, enabled = true) {
         case 'a':
           event.preventDefault();
           handlers.onFocusAsk();
-          break;
-        case 'w':
-          event.preventDefault();
-          handlers.onSearch();
-          break;
-        case '?':
-          handlers.onHelp();
           break;
       }
     }

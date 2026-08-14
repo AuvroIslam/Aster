@@ -9,6 +9,7 @@ import { resolveOutputLanguage } from '../lib/lang.js';
 import { extractDocument } from '../services/pdf.js';
 import { generate } from '../services/gemma.js';
 import { buildPagePrompt, buildSummaryPrompt } from '../prompts/document.js';
+import { buildDocQuestionPrompt } from '../prompts/practice.js';
 
 export const docRouter = express.Router();
 
@@ -66,6 +67,8 @@ async function loadBundled(spec) {
     id: spec.id,
     title: spec.title,
     ...extracted,
+    // Kept so the reader can render the real pages, not just their text.
+    file: buffer,
     bundled: true,
     createdAt: Date.now(),
   };
@@ -137,7 +140,9 @@ docRouter.post(
     const extracted = await extractDocument(req.body);
 
     const id = `doc-${Date.now().toString(36)}`;
-    const doc = { id, title, ...extracted, createdAt: Date.now() };
+    // The raw bytes stay in memory alongside the extraction so the reader can
+    // render the real pages. Still nothing on disk — it dies with the process.
+    const doc = { id, title, ...extracted, file: req.body, createdAt: Date.now() };
     remember(doc);
 
     logger.info(
@@ -201,6 +206,30 @@ docRouter.get(
       truncated: Boolean(doc.truncated),
       blocks: doc.blocks,
     });
+  })
+);
+
+/**
+ * The original PDF bytes, so the browser can render the real pages.
+ *
+ * Extracted text is what Aster reasons over and what a screen reader gets;
+ * this is for the eyes in the room — a low-vision learner with usable sight,
+ * or someone sitting alongside them.
+ */
+docRouter.get(
+  '/api/doc/:id/file',
+  asyncRoute(async (req, res) => {
+    const spec = BUNDLED.find((b) => b.id === req.params.id);
+    if (spec) await loadBundled(spec);
+    const doc = getDocument(req.params.id);
+
+    if (!doc.file) throw notFound('The original file for that document is no longer held.');
+
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `inline; filename="${doc.id}.pdf"`);
+    // Immutable for the life of the process; the id changes with the upload.
+    res.set('Cache-Control', 'private, max-age=3600');
+    res.send(Buffer.from(doc.file));
   })
 );
 
@@ -285,6 +314,56 @@ docRouter.post(
     const explanation = result.text.trim();
     doc.pageExplanations.set(page, explanation);
     res.json({ id: doc.id, page, explanation, cached: false });
+  })
+);
+
+/**
+ * A question about the document.
+ *
+ * Grounded in the pages around wherever the learner is, rather than the whole
+ * document: it keeps the answer about what they are actually reading, and
+ * keeps the prompt small enough to answer quickly.
+ */
+docRouter.post(
+  '/api/doc/:id/ask',
+  asyncRoute(async (req, res) => {
+    const spec = BUNDLED.find((b) => b.id === req.params.id);
+    if (spec) await loadBundled(spec);
+    const doc = getDocument(req.params.id);
+
+    const question = String(req.body?.question || '').trim();
+    if (!question) throw badRequest('Provide a `question`.');
+    if (question.length > 500) throw badRequest('That question is too long.');
+
+    const page = Number.parseInt(req.body?.page, 10);
+    const around = Number.isInteger(page) && page >= 1 && page <= doc.pages ? page : null;
+
+    // Two pages either side, or the opening of the document when we do not
+    // know where they are.
+    const context = around
+      ? [around - 2, around - 1, around, around + 1, around + 2]
+          .filter((n) => n >= 1 && n <= doc.pages)
+          .map((n) => `--- page ${n} ---\n${pageText(doc, n)}`)
+          .join('\n')
+      : documentText(doc, 12_000);
+
+    const language = resolveOutputLanguage(config.language.output, 'en');
+    const { text } = await generate({
+      prompt: buildDocQuestionPrompt({
+        title: doc.title,
+        question,
+        context,
+        page: around,
+        language: language.name,
+      }),
+      temperature: 0.2,
+      maxOutputTokens: 700,
+      thinkingLevel: 'minimal',
+      maxRetries: 0,
+      timeoutMs: 30_000,
+    });
+
+    res.json({ id: doc.id, page: around, question, answer: text.trim() });
   })
 );
 

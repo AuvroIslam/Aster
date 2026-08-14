@@ -13,69 +13,105 @@ import { useSpeech } from '@/components/learn/use-speech';
  */
 export type ReadingMode = 'idle' | 'auto' | 'follow';
 
+/**
+ * What Aster is doing right now, so the reader can say so.
+ *
+ * Without this the surface looks broken during the seconds between scrolling
+ * and the voice starting: the model takes a few seconds to answer, and silence
+ * is indistinguishable from a bug.
+ */
+export type ReadingStatus =
+  | { kind: 'idle' }
+  | { kind: 'settling'; page: number }
+  | { kind: 'thinking'; page: number }
+  | { kind: 'speaking'; page: number };
+
+/** How long the learner must rest on a page before Aster starts talking. */
+const SETTLE_MS = 650;
+
 export function useReading(docId: string | null, pages: number) {
   const [mode, setMode] = useState<ReadingMode>('idle');
+  const [status, setStatus] = useState<ReadingStatus>({ kind: 'idle' });
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   /** Page number → explanation, as they arrive. */
   const [explanations, setExplanations] = useState<Record<number, string>>({});
-  const [busyPage, setBusyPage] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  const { speak, cancel, speaking, supported } = useSpeech();
+  const { speak, cancel, supported } = useSpeech();
+
   const modeRef = useRef<ReadingMode>('idle');
   modeRef.current = mode;
   const abortRef = useRef<AbortController | null>(null);
-  /** Pages already fetched, so scrolling back does not refetch. */
-  const seenRef = useRef<Set<number>>(new Set());
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The page follow mode is currently working on, so it does not repeat it. */
+  const followingRef = useRef<number | null>(null);
+  /** Explanations already fetched, readable synchronously inside the walk. */
+  const cacheRef = useRef<Record<number, string>>({});
+
+  const clearSettle = () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = null;
+  };
 
   const stop = useCallback(() => {
     modeRef.current = 'idle';
     setMode('idle');
+    clearSettle();
+    followingRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
     cancel();
-    setBusyPage(null);
+    setStatus({ kind: 'idle' });
   }, [cancel]);
 
-  // Leaving the page must not leave a voice running.
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  useEffect(
+    () => () => {
+      clearSettle();
+      abortRef.current?.abort();
+    },
+    []
+  );
 
   /** Fetches one page's explanation, reusing anything already fetched. */
   const explainPage = useCallback(
     async (page: number): Promise<string | null> => {
       if (!docId) return null;
-      const existing = explanations[page];
-      if (existing) return existing;
+      const cached = cacheRef.current[page];
+      if (cached) return cached;
 
       const controller = new AbortController();
       abortRef.current = controller;
-      setBusyPage(page);
+      setStatus({ kind: 'thinking', page });
       setError(null);
 
       try {
         const result = await api.explainPage(docId, page, controller.signal);
+        cacheRef.current[page] = result.explanation;
         setExplanations((prev) => ({ ...prev, [page]: result.explanation }));
-        seenRef.current.add(page);
         return result.explanation;
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return null;
         setError(err instanceof ApiError ? err.message : 'Could not reach the Aster server.');
+        setStatus({ kind: 'idle' });
         return null;
-      } finally {
-        setBusyPage((current) => (current === page ? null : current));
       }
     },
-    [docId, explanations]
+    [docId]
   );
 
-  /** Explain a page and read it out, as one step. */
+  /** Explain a page and read it out. Resolves true only if it finished. */
   const readPage = useCallback(
     async (page: number) => {
       const text = await explainPage(page);
       if (!text) return false;
+      setStatus({ kind: 'speaking', page });
       const result = await speak(text);
+      // Only clear the status if nothing newer has taken over since.
+      setStatus((current) =>
+        current.kind === 'speaking' && current.page === page ? { kind: 'idle' } : current
+      );
       return !result.cancelled;
     },
     [explainPage, speak]
@@ -88,10 +124,10 @@ export function useReading(docId: string | null, pages: number) {
     setSummaryLoading(true);
     setError(null);
     try {
-      const existing = summary ?? (await api.docSummary(docId)).summary;
-      setSummary(existing);
+      const text = summary ?? (await api.docSummary(docId)).summary;
+      setSummary(text);
       setSummaryLoading(false);
-      await speak(existing);
+      await speak(text);
     } catch (err) {
       setSummaryLoading(false);
       setError(err instanceof ApiError ? err.message : 'Could not reach the Aster server.');
@@ -99,14 +135,18 @@ export function useReading(docId: string | null, pages: number) {
   }, [docId, summary, speak, stop]);
 
   /**
-   * Walks the document from the current page, one page at a time. Each page is
-   * fetched, spoken, and only then does it move on — so the explanation is
-   * never cut off by the next one starting.
+   * Walks the document from a given page: explain, speak, scroll on, repeat.
+   *
+   * `currentPage` is what the reader scrolls to, so during the walk the voice
+   * drives it and scroll position must not — see `onPageInView`, which stands
+   * down in auto mode. Otherwise the observer would report whatever page the
+   * smooth scroll was passing over, and the walk would chase its own tail.
    */
   const startAuto = useCallback(
     async (from = 1) => {
       if (!docId) return;
       cancel();
+      clearSettle();
       modeRef.current = 'auto';
       setMode('auto');
       setError(null);
@@ -115,49 +155,95 @@ export function useReading(docId: string | null, pages: number) {
         if (modeRef.current !== 'auto') break;
         setCurrentPage(page);
         const finished = await readPage(page);
-        // A cancelled utterance means the learner took over.
-        if (!finished) break;
+        // A cancelled utterance means the learner took over; stop walking.
+        if (!finished || modeRef.current !== 'auto') break;
       }
 
       if (modeRef.current === 'auto') {
         modeRef.current = 'idle';
         setMode('idle');
+        setStatus({ kind: 'idle' });
       }
     },
     [docId, pages, readPage, cancel]
   );
 
-  /** Follow-along: explain whatever page scrolls into view. */
+  /** Follow-along: explain whatever page the learner settles on. */
   const startFollow = useCallback(() => {
     cancel();
     modeRef.current = 'follow';
+    followingRef.current = null;
     setMode('follow');
     setError(null);
-  }, [cancel]);
+    setStatus({ kind: 'settling', page: currentPage });
+
+    // Start on the page already in view rather than waiting for a scroll —
+    // turning it on and having nothing happen reads as broken.
+    clearSettle();
+    settleTimer.current = setTimeout(() => {
+      if (modeRef.current !== 'follow') return;
+      followingRef.current = currentPage;
+      void readPage(currentPage);
+    }, SETTLE_MS);
+  }, [cancel, currentPage, readPage]);
 
   /**
-   * Called by the reader as the page in view changes. Only acts in follow
-   * mode, and never interrupts an explanation already being spoken.
+   * Called by the reader as the page in view changes.
+   *
+   * Scrolling to a new page is a deliberate act, so it wins: whatever is being
+   * said is cut off and the new page is explained instead. The earlier version
+   * dropped the page whenever the voice was busy, which meant scrolling during
+   * an explanation silently did nothing at all.
+   *
+   * The settle delay stops it firing for every page flicking past during a
+   * long scroll — only the page actually rested on is explained.
    */
   const onPageInView = useCallback(
     (page: number) => {
+      // In auto mode the voice leads and the scroll follows, not the reverse.
+      if (modeRef.current === 'auto') return;
+
       setCurrentPage(page);
       if (modeRef.current !== 'follow') return;
-      if (typeof window !== 'undefined' && window.speechSynthesis?.speaking) return;
-      void readPage(page);
+      if (followingRef.current === page) return;
+
+      clearSettle();
+      setStatus({ kind: 'settling', page });
+      settleTimer.current = setTimeout(() => {
+        if (modeRef.current !== 'follow') return;
+        followingRef.current = page;
+        cancel();
+        void readPage(page);
+      }, SETTLE_MS);
     },
-    [readPage]
+    [cancel, readPage]
+  );
+
+  /** Moves to a page and, if a mode is running, explains it there. */
+  const goToPage = useCallback(
+    (page: number) => {
+      const target = Math.min(pages, Math.max(1, page));
+      clearSettle();
+      followingRef.current = target;
+      setCurrentPage(target);
+      if (modeRef.current !== 'idle') {
+        cancel();
+        void readPage(target);
+      }
+      return target;
+    },
+    [pages, cancel, readPage]
   );
 
   return {
     mode,
+    status,
+    goToPage,
     summary,
     summaryLoading,
     explanations,
-    busyPage,
     currentPage,
     error,
-    speaking,
     speechSupported: supported,
     readSummary,
     startAuto,
