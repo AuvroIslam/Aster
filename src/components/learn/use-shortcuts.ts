@@ -41,6 +41,8 @@ export function useShortcuts(handlers: ShortcutHandlers, enabled = true) {
 
       if (isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
 
+      // Auto-repeat is never wanted for a one-shot action; only the seek keys
+      // below benefit from it, and they read the current time each time.
       const key = event.key;
 
       /*
@@ -52,6 +54,9 @@ export function useShortcuts(handlers: ShortcutHandlers, enabled = true) {
        */
       if (key.toLowerCase() === 'w') {
         event.preventDefault();
+        // Holding a key repeats it. Without this guard, holding W to speak
+        // fired this dozens of times a second and locked the interface up.
+        if (event.repeat) return;
         handlers.onSearch();
         return;
       }

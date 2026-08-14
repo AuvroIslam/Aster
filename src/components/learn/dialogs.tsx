@@ -94,20 +94,23 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
 
 
 /**
- * Find a lesson: hold to speak, or type. Spoken search records a clip, the
- * server transcribes it with Whisper and searches YouTube. Fully reachable
- * without sight — the results list is keyboard-navigable and the first result
- * is focusable immediately.
+ * Find a lesson: hold to speak, or type. Speech is recognised in the browser,
+ * so the search reaches the server as words and needs no transcription key.
+ * Fully reachable without sight — the results list is keyboard-navigable and
+ * the first result is focusable immediately.
  */
 export function SearchDialog({
   open,
   onClose,
   onPick,
+  /** True when opened by holding W, so the microphone starts with the dialog. */
+  autoListen = false,
 }: {
   open: boolean;
   onClose: () => void;
   /** Receives a YouTube URL ready to load. */
   onPick: (url: string) => void;
+  autoListen?: boolean;
 }) {
   const voice = useVoiceSearch();
   const [draft, setDraft] = useState('');
@@ -120,7 +123,41 @@ export function SearchDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const recording = voice.state === 'recording';
+  /**
+   * W is advertised on the button as hold-to-speak, so it has to actually hold
+   * the microphone open. The keypress that opened this dialog is already spent
+   * by the time it mounts, hence `autoListen` rather than a keydown here.
+   */
+  const listening = voice.state === 'recording';
+  useEffect(() => {
+    if (!open || !autoListen) return;
+    void voice.start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoListen]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== 'w' || event.repeat) return;
+      if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
+      event.preventDefault();
+      if (!listening) void voice.start();
+    }
+    function onKeyUp(event: KeyboardEvent) {
+      if (event.key.toLowerCase() === 'w' && listening) voice.stop();
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, listening]);
+
+  const recording = listening;
   const busy = voice.state === 'transcribing';
 
   return (

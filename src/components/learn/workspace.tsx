@@ -33,6 +33,8 @@ export function Workspace() {
   const [highContrast, setHighContrast] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  /** True when W opened it, so the microphone opens with the dialog. */
+  const [searchByVoice, setSearchByVoice] = useState(false);
   const [readyCount, setReadyCount] = useState(0);
   const [announcement, setAnnouncement] = useState('');
 
@@ -130,7 +132,10 @@ export function Workspace() {
           setTab('tutor');
           tutorRef.current?.askPreset(index);
         },
-        onSearch: () => setShowSearch(true),
+        onSearch: () => {
+          setSearchByVoice(true);
+          setShowSearch(true);
+        },
         onHelp: () => setShowShortcuts(true),
         onEscape: () => {
           playback.stopSpeaking();
@@ -179,7 +184,10 @@ export function Workspace() {
               Notes and PDFs
             </Link>
             <button
-              onClick={() => setShowSearch(true)}
+              onClick={() => {
+                setSearchByVoice(false);
+                setShowSearch(true);
+              }}
               className="rounded-full border border-line px-3 py-1.5 text-xs transition-colors hover:border-line-strong"
             >
               Find a lesson
@@ -387,6 +395,7 @@ export function Workspace() {
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SearchDialog
         open={showSearch}
+        autoListen={searchByVoice}
         onClose={() => setShowSearch(false)}
         onPick={(url) => {
           setShowSearch(false);
